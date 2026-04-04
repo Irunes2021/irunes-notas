@@ -133,11 +133,7 @@
   .toast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dark);color:var(--gold);padding:.7rem 1.4rem;border-radius:100px;font-size:.83rem;font-weight:500;border:1px solid rgba(201,168,76,.3);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:1000;white-space:nowrap;}
   .toast.show{transform:translateX(-50%) translateY(0);}
 
-  @media print {
-    body * { visibility: hidden; }
-    #print-area, #print-area * { visibility: visible; }
-    #print-area { position: fixed; left: 0; top: 0; width: 80mm; }
-  }
+
 </style>
 </head>
 <body>
@@ -155,11 +151,11 @@
     <div class="login-form">
       <div class="field-group">
         <label>Número de socio</label>
-        <input type="text" id="login-user" placeholder="Ej: 317" autocomplete="off" inputmode="numeric">
+        <input type="text" id="login-user" placeholder="Ej: 317" autocomplete="off" inputmode="numeric" name="notas-user">
       </div>
       <div class="field-group">
         <label>DNI</label>
-        <input type="password" id="login-pass" placeholder="Ej: 15252477G">
+        <input type="password" id="login-pass" placeholder="Ej: 15252477G" autocomplete="new-password" name="notas-pass">
         <div class="error-msg" id="login-error">Número de socio o DNI incorrecto</div>
       </div>
       <button class="btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
@@ -737,8 +733,25 @@ async function confirmarPago(){
   const saved=await saveNota(nota);
   if(!saved)return;
   notas.unshift(saved);
-  // Print
-  window.print();
+  // Print ticket only once
+  const printArea = document.getElementById('print-area').innerHTML;
+  const printWin = window.open('','_blank','width=400,height=600');
+  printWin.document.write(`<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<style>
+  body{font-family:'DM Sans',sans-serif;font-size:13px;width:80mm;margin:0;padding:10px;}
+  h4{font-size:14px;margin:0 0 2px;}
+  p{margin:2px 0;font-size:11px;color:#666;}
+  .ticket-line{display:flex;justify-content:space-between;padding:2px 0;}
+  .ticket-line.subtotal{border-top:1px dashed #ccc;margin-top:4px;padding-top:4px;font-weight:600;}
+  .ticket-line.propina{color:#999;}
+  .ticket-line.total{border-top:2px solid #000;margin-top:4px;padding-top:4px;font-size:15px;font-weight:700;}
+  .ticket-header{text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ccc;}
+</style></head>
+<body>${printArea}</body></html>`);
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(()=>{printWin.print();printWin.close();},300);
   // Reset
   closePago();
   cantidades={};
