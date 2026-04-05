@@ -149,13 +149,21 @@
       <p>Sociedad Gastronómica</p>
     </div>
     <div class="login-form">
+      <!-- Honeypot fields to prevent browser autofill -->
+      <div style="display:none;"><input type="text" name="username"><input type="password" name="password"></div>
       <div class="field-group">
         <label>Número de socio</label>
-        <input type="text" id="login-user" placeholder="Ej: 317" autocomplete="off" inputmode="numeric" name="notas-user">
+        <input type="text" id="login-user" placeholder="Ej: 317" 
+          autocomplete="off" inputmode="numeric" 
+          readonly onfocus="this.removeAttribute('readonly')"
+          style="background:rgba(255,255,255,.06);">
       </div>
       <div class="field-group">
         <label>DNI</label>
-        <input type="password" id="login-pass" placeholder="Ej: 15252477G" autocomplete="new-password" name="notas-pass">
+        <input type="text" id="login-pass" placeholder="Ej: 15252477G"
+          autocomplete="off"
+          readonly onfocus="this.removeAttribute('readonly');this.type='password'"
+          style="background:rgba(255,255,255,.06);">
         <div class="error-msg" id="login-error">Número de socio o DNI incorrecto</div>
       </div>
       <button class="btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
@@ -764,24 +772,44 @@ function renderHistorial(){
   const mias=notas.filter(n=>n.socio_num===cu);
   const list=document.getElementById('historial-list');
   if(!mias.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>No tienes notas registradas.</p></div>';return;}
-  list.innerHTML=mias.map(n=>{
+  list.innerHTML=mias.map((n,idx)=>{
     const d=new Date(n.created_at);
     const fechaStr=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     const lineas=JSON.parse(n.lineas||'[]');
-    const resumen=lineas.slice(0,3).map(l=>l.qty+'x '+l.nombre).join(', ')+(lineas.length>3?'…':'');
+    const detalleHtml=lineas.map(l=>
+      '<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.2rem 0;border-bottom:1px solid var(--border);">'+
+        '<span>'+l.qty+'x '+l.nombre+'</span>'+
+        '<span style="color:var(--text-muted)">'+fmt2(l.subtotal)+'€</span>'+
+      '</div>'
+    ).join('');
     return '<div class="nota-item">'+
-      '<div class="nota-header">'+
+      '<div class="nota-header" onclick="toggleNota('+idx+')" style="cursor:pointer;">'+
         '<span class="nota-fecha">'+fechaStr+'</span>'+
-        '<span class="nota-total">'+fmt2(n.total)+'€</span>'+
+        '<div style="display:flex;align-items:center;gap:.5rem;">'+
+          '<span class="nota-total">'+fmt2(n.total)+'€</span>'+
+          '<span id="arrow-'+idx+'" style="color:var(--text-muted);font-size:.9rem;transition:transform .2s">▾</span>'+
+        '</div>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap">'+
+      '<div style="display:flex;align-items:center;gap:.5rem;margin:.4rem 0;flex-wrap:wrap">'+
         '<span class="nota-pago '+n.forma_pago+'">'+(n.forma_pago==='efectivo'?'💵 Efectivo':'💳 Tarjeta')+'</span>'+
         (n.turno?'<span style="font-size:.68rem;padding:.18rem .5rem;border-radius:20px;background:rgba(201,168,76,.15);color:var(--brown);">'+(n.turno==='comida'?'🍽️ Comida':n.turno==='merienda'?'☕ Merienda':'🌙 Cena')+(n.comensales?' · '+n.comensales+' pers.':'')+'</span>':'')+
         (n.propina>0?'<span style="font-size:.7rem;color:var(--text-muted)">+'+fmt2(n.propina)+'€ propina</span>':'')+
       '</div>'+
-      '<div class="nota-linea">'+resumen+'</div>'+
+      '<div id="detalle-'+idx+'" style="display:none;margin-top:.4rem;">'+
+        detalleHtml+
+        (n.propina>0?'<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.3rem 0;color:var(--text-muted);"><span>Propina</span><span>'+fmt2(n.propina)+'€</span></div>':'')+
+        '<div style="display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;padding:.4rem 0;border-top:2px solid var(--dark);margin-top:.2rem;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
+      '</div>'+
     '</div>';
   }).join('');
+}
+
+function toggleNota(idx){
+  const det=document.getElementById('detalle-'+idx);
+  const arr=document.getElementById('arrow-'+idx);
+  const open=det.style.display==='none';
+  det.style.display=open?'block':'none';
+  arr.style.transform=open?'rotate(180deg)':'rotate(0deg)';
 }
 
 // ── ADMIN ────────────────────────────────────────────────────
