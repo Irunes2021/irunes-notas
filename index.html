@@ -635,7 +635,7 @@ function doLogout(){
 
 // ── SUPABASE ─────────────────────────────────────────────────
 async function loadNotas(){
-  const {data,error}=await sb.from('notas_gasto').select('*').order('created_at',{ascending:false}).limit(200);
+  const {data,error}=await sb.from('notas_gasto').select('*').order('created_at',{ascending:false}).limit(1000);
   if(!error) notas=data||[];
 }
 async function saveNota(nota){
@@ -942,7 +942,9 @@ function switchTab(tab){
   ['carta','historial','admin'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['carta','historial','admin'][i]===tab));
   if(tab==='historial')renderHistorial();
-  if(tab==='admin'){renderAdmin();renderCartaAdmin();}
+  if(tab==='admin'){
+    loadNotas().then(()=>{renderAdmin();renderCartaAdmin();});
+  }
 }
 
 // -- GESTION CARTA -----------------------------------------------
