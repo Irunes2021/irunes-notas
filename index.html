@@ -231,7 +231,19 @@
         <div class="filter-chip" onclick="setAdminFilter('tarjeta',this)">💳 Tarjeta</div>
       </div>
       <div class="divider"></div>
-      <div class="section-title">Últimas notas</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+        <div class="section-title" style="margin-bottom:0">Notas</div>
+        <div style="display:flex;gap:.4rem;align-items:center;">
+          <button class="filter-chip active" id="filter-todas" onclick="setFechaFilter('todas',this)">Todas</button>
+          <button class="filter-chip" id="filter-fecha" onclick="setFechaFilter('fecha',this)">📅 Por fecha</button>
+        </div>
+      </div>
+      <div id="fecha-picker" style="display:none;margin-bottom:.75rem;">
+        <input type="date" id="admin-fecha-input" 
+          style="width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;background:#fff;transition:border-color .2s;"
+          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
+          onchange="renderAdmin()">
+      </div>
       <div id="admin-list"></div>
     </div>
 
@@ -876,7 +888,11 @@ function setAdminFilter(f,el){
 }
 
 function renderAdmin(){
-  const filt=adminFilter==='todos'?notas:notas.filter(n=>n.forma_pago===adminFilter);
+  const fechaVal=document.getElementById('admin-fecha-input')?document.getElementById('admin-fecha-input').value:'';
+  let base=adminFechaFilter==='fecha'&&fechaVal
+    ? notas.filter(n=>n.created_at&&n.created_at.slice(0,10)===fechaVal)
+    : notas;
+  const filt=adminFilter==='todos'?base:base.filter(n=>n.forma_pago===adminFilter);
   const totalSum=filt.reduce((a,n)=>a+n.total,0);
   const efectivoSum=notas.filter(n=>n.forma_pago==='efectivo').reduce((a,n)=>a+n.total,0);
   const tarjetaSum=notas.filter(n=>n.forma_pago==='tarjeta').reduce((a,n)=>a+n.total,0);
@@ -1012,6 +1028,15 @@ function switchAdminTab(tab,el){
   document.querySelectorAll('[id^="subtab-btn-"]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   if(tab==='carta') renderCartaAdmin();
+}
+
+function setFechaFilter(f,el){
+  adminFechaFilter=f;
+  document.querySelectorAll('#filter-todas,#filter-fecha').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('fecha-picker').style.display=f==='fecha'?'block':'none';
+  if(f==='todas') document.getElementById('admin-fecha-input').value='';
+  renderAdmin();
 }
 
 function showToast(msg){
