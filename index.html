@@ -175,8 +175,8 @@
       <div class="avatar" id="user-avatar"></div>
     </div>
   </div>
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('carta')">📋 Carta</div>
+  <div class="tabs" id="main-tabs">
+    <div class="tab active" id="tab-btn-carta" onclick="switchTab('carta')">📋 Carta</div>
     <div class="tab" onclick="switchTab('historial')">🕐 Mis notas</div>
     <div class="tab admin-only" style="display:none" onclick="switchTab('admin')">⚙️ Admin</div>
   </div>
@@ -225,6 +225,43 @@
     <div class="divider"></div>
     <div class="section-title">Últimas notas</div>
     <div id="admin-list"></div>
+    <div class="divider"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
+      <div class="section-title" style="margin-bottom:0">🍽️ Gestión de la carta</div>
+      <button class="filter-chip" onclick="openAddProducto()" style="background:var(--dark);color:var(--gold);border-color:rgba(201,168,76,.3)">+ Añadir</button>
+    </div>
+    <div id="carta-admin-list"></div>
+
+    <!-- Modal nuevo producto -->
+    <div class="modal-overlay" id="producto-modal">
+      <div class="modal-sheet">
+        <div class="modal-handle"></div>
+        <h3 id="producto-modal-title">Nuevo producto</h3>
+        <div class="field-group" style="margin-bottom:.75rem;">
+          <label style="display:block;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;margin-bottom:.4rem;">Categoría</label>
+          <select id="pm-cat" style="width:100%;padding:.7rem .85rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.9rem;background:#fff;outline:none;">
+            <option>Vinos</option>
+            <option>Refrescos y Cervezas</option>
+            <option>Cafés</option>
+            <option>Licores</option>
+            <option>Cocina</option>
+          </select>
+        </div>
+        <div class="field-group" style="margin-bottom:.75rem;">
+          <label style="display:block;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;margin-bottom:.4rem;">Nombre del producto</label>
+          <input type="text" id="pm-nombre" placeholder="Ej: Cerveza Estrella" style="width:100%;padding:.7rem .85rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;">
+        </div>
+        <div class="field-group" style="margin-bottom:.75rem;">
+          <label style="display:block;color:var(--text-muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.09em;margin-bottom:.4rem;">Precio (€)</label>
+          <input type="number" id="pm-precio" placeholder="0.00" min="0" step="0.10" style="width:100%;padding:.7rem .85rem;border:1px solid var(--border);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;">
+        </div>
+        <div id="pm-error" style="color:#ff6b6b;font-size:.78rem;margin-bottom:.5rem;display:none"></div>
+        <div style="display:flex;gap:.7rem;margin-top:.5rem;">
+          <button class="btn-back" onclick="closeProductoModal()" style="padding:.88rem 1.2rem;background:none;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.92rem;cursor:pointer;color:var(--text-muted);">Cancelar</button>
+          <button class="btn-confirm" onclick="saveProducto()" style="flex:1;padding:.88rem;background:var(--gold);color:var(--dark);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;">Guardar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Total bar -->
@@ -295,160 +332,160 @@ const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const SOCIOS={
-  '000':{dni:'ADMIN2024',nombre:'Administrador',apellidos:'',initials:'AD',admin:true},
-  '004':{dni:'15230382N',nombre:'Luis Maria',apellidos:'Ausan Etxeberria',initials:'LM',admin:false},
-  '005':{dni:'15226757K',nombre:'Salvador',apellidos:'Ribera Garin',initials:'SR',admin:false},
-  '006':{dni:'15226680J',nombre:'Pablo',apellidos:'Huarte Zabala',initials:'PH',admin:false},
-  '008':{dni:'15230802H',nombre:'Vicente',apellidos:'Larzabal Larraza',initials:'VL',admin:false},
-  '009':{dni:'15232292J',nombre:'Angel',apellidos:'Saiz-Calderon Frances',initials:'AS',admin:false},
-  '011':{dni:'15227272F',nombre:'Carlos Ignacio',apellidos:'Rodriguez Artia',initials:'CI',admin:false},
-  '012':{dni:'15231985M',nombre:'Javier',apellidos:'Uranga Jauregui',initials:'JU',admin:false},
-  '013':{dni:'15233738X',nombre:'Juan Jose',apellidos:'Garagarza Alonso',initials:'JJ',admin:false},
-  '014':{dni:'15230156Q',nombre:'Francisco Jose',apellidos:'Perez Santana',initials:'FJ',admin:false},
-  '020':{dni:'15239404H',nombre:'Antxon',apellidos:'Mendia Eguren',initials:'AM',admin:false},
-  '030':{dni:'00000000X',nombre:'Alberto',apellidos:'Hernandez Vicente',initials:'AH',admin:false},
-  '044':{dni:'15231888T',nombre:'Koldo',apellidos:'Gojenola Etxeberria',initials:'KG',admin:false},
-  '054':{dni:'15228939H',nombre:'Jose',apellidos:'Rodriguez Marquez',initials:'JR',admin:false},
-  '057':{dni:'15237717X',nombre:'Nicasio',apellidos:'Ugartemendia Arocena',initials:'NU',admin:false},
-  '062':{dni:'15243547K',nombre:'Alberto',apellidos:'Berges Ausan',initials:'AB',admin:false},
-  '068':{dni:'15242780J',nombre:'Txema',apellidos:'Sagredo Santxo',initials:'TS',admin:false},
-  '069':{dni:'15230000K',nombre:'Jose Javier',apellidos:'Gojenola Etxeberria',initials:'JJ',admin:false},
-  '086':{dni:'15230773N',nombre:'Eduardo',apellidos:'Rodriguez Gonzalez',initials:'ER',admin:false},
-  '112':{dni:'15234669K',nombre:'Manuel',apellidos:'Rodriguez Jimenez',initials:'MR',admin:false},
-  '120':{dni:'15230287D',nombre:'Jose Javier',apellidos:'Gracia Lapitz',initials:'JJ',admin:false},
-  '129':{dni:'15239023M',nombre:'Jose Maria',apellidos:'Beloki Galarza',initials:'JM',admin:false},
-  '135':{dni:'00000000X',nombre:'Daniel',apellidos:'Barahona Alonso',initials:'DB',admin:false},
-  '137':{dni:'15230602W',nombre:'Vicente',apellidos:'Soria Jorge',initials:'VS',admin:false},
-  '153':{dni:'15243029D',nombre:'Francisco Javier',apellidos:'Beloki Galarza',initials:'FJ',admin:false},
-  '154':{dni:'15889440M',nombre:'Pedro Maria',apellidos:'Barrutia Vicente',initials:'PM',admin:false},
-  '157':{dni:'15244007K',nombre:'Carlos',apellidos:'Ferreira Sanchez',initials:'CF',admin:false},
-  '163':{dni:'15244694H',nombre:'Felix',apellidos:'Lekuona Otegi',initials:'FL',admin:false},
-  '167':{dni:'15239915T',nombre:'Juan',apellidos:'Martinez Martiarena',initials:'JM',admin:false},
-  '169':{dni:'15237203W',nombre:'Juan Miguel',apellidos:'Etxeberria Lasa',initials:'JM',admin:false},
-  '171':{dni:'15239062K',nombre:'Eusebio',apellidos:'Gil Carrillo',initials:'EG',admin:false},
-  '184':{dni:'15230804C',nombre:'Jesus',apellidos:'Iruretagoiena Amiano',initials:'JI',admin:false},
-  '193':{dni:'15244217R',nombre:'Fco. Javier',apellidos:'Arranz Molinero',initials:'FJ',admin:false},
-  '195':{dni:'00000000X',nombre:'Martin',apellidos:'Larruskain Cabedo',initials:'ML',admin:false},
-  '202':{dni:'15240871J',nombre:'Manuel',apellidos:'Bravo Aranda',initials:'MB',admin:false},
-  '211':{dni:'00000000X',nombre:'Rafael',apellidos:'Gonzalez Urtizberea',initials:'RG',admin:false},
-  '213':{dni:'15248068B',nombre:'Ricardo',apellidos:'Larrasa Martin',initials:'RL',admin:false},
-  '216':{dni:'00000000X',nombre:'Tomás',apellidos:'García Conde',initials:'TG',admin:false},
-  '218':{dni:'15240044Z',nombre:'Juan Jose',apellidos:'Errazkin Saiz',initials:'JJ',admin:false},
-  '222':{dni:'15260748H',nombre:'Iñigo',apellidos:'Ausan Elosegui',initials:'IA',admin:false},
-  '224':{dni:'15243456E',nombre:'Juan Mª',apellidos:'Galarza Peñagaricano',initials:'JM',admin:false},
-  '225':{dni:'15243891C',nombre:'Juan Antonio',apellidos:'Rodriguez Diez',initials:'JA',admin:false},
-  '227':{dni:'15242949K',nombre:'Proko',apellidos:'Gomez Pinto',initials:'PG',admin:false},
-  '229':{dni:'00000000X',nombre:'Garikoitz',apellidos:'Larraburu Vertiz',initials:'GL',admin:false},
-  '231':{dni:'15259457.',nombre:'Iñaki',apellidos:'Etxaniz Sein',initials:'IE',admin:false},
-  '232':{dni:'44556366.',nombre:'Iñaki',apellidos:'Lasa Etxabe',initials:'IL',admin:false},
-  '233':{dni:'15255877T',nombre:'Vicente',apellidos:'Torres Jimenez',initials:'VT',admin:false},
-  '235':{dni:'00000000X',nombre:'Eusebio',apellidos:'Hernandez Rodriguez',initials:'EH',admin:false},
-  '236':{dni:'72662240L',nombre:'Antxon',apellidos:'Moreno Gama',initials:'AM',admin:false},
-  '237':{dni:'15254642F',nombre:'Juan Carlos',apellidos:'Santamaria Espiga',initials:'JC',admin:false},
-  '238':{dni:'15257706N',nombre:'Fernando',apellidos:'Celaya Segurola',initials:'FC',admin:false},
-  '239':{dni:'00000000X',nombre:'Alvaro',apellidos:'Mendi Aliende',initials:'AM',admin:false},
-  '240':{dni:'15229354L',nombre:'Alberto',apellidos:'Fernandez Camarero',initials:'AF',admin:false},
-  '244':{dni:'15255884F',nombre:'Eduardo',apellidos:'Ruiz Fernandez',initials:'ER',admin:false},
-  '245':{dni:'44551280G',nombre:'Javier',apellidos:'Avila Gil',initials:'JA',admin:false},
-  '247':{dni:'00000000X',nombre:'Jose Antonio',apellidos:'Soria Avila',initials:'JA',admin:false},
-  '248':{dni:'00000000X',nombre:'Jose Luis',apellidos:'Olazabal Ortiz',initials:'JL',admin:false},
-  '250':{dni:'44552001.',nombre:'Juan Manuel',apellidos:'Garate Cepa',initials:'JM',admin:false},
-  '257':{dni:'00000000X',nombre:'Alberto',apellidos:'Santiago Sevilla',initials:'AS',admin:false},
-  '258':{dni:'44550666B',nombre:'Ruben',apellidos:'Martin Melero',initials:'RM',admin:false},
-  '259':{dni:'15260771H',nombre:'Jose Ignacio',apellidos:'Zamarreño Sanchez',initials:'JI',admin:false},
-  '263':{dni:'00000000X',nombre:'Gaizka',apellidos:'Lekuona Errazkin',initials:'GL',admin:false},
-  '264':{dni:'00000000X',nombre:'Iñaki',apellidos:'Arzuaga Iribarren',initials:'IA',admin:false},
-  '265':{dni:'15257755S',nombre:'Miguel Angel',apellidos:'Garcia Estevez',initials:'MA',admin:false},
-  '266':{dni:'15996544K',nombre:'Rafael',apellidos:'Amigo Martinez',initials:'RA',admin:false},
-  '268':{dni:'15254808N',nombre:'Jon Karla',apellidos:'Vielba Quintana',initials:'JK',admin:false},
-  '272':{dni:'44560933C',nombre:'David',apellidos:'Saez Azkargorta',initials:'DS',admin:false},
-  '273':{dni:'15889353X',nombre:'Jose Luis',apellidos:'Sixto Rey',initials:'JL',admin:false},
-  '274':{dni:'44562965M',nombre:'Joseba',apellidos:'Garagarza Lazaro',initials:'JG',admin:false},
-  '276':{dni:'15255821J',nombre:'Gorka',apellidos:'Arbelaiz Emazabel',initials:'GA',admin:false},
-  '277':{dni:'15243547K',nombre:'Lourdes',apellidos:'Darceles Olaizola',initials:'LD',admin:false},
-  '278':{dni:'15257909P',nombre:'Roberto',apellidos:'Mendaña Castro',initials:'RM',admin:false},
-  '280':{dni:'15242283E',nombre:'Beñardo',apellidos:'Rojo Galardi',initials:'BR',admin:false},
-  '281':{dni:'15250540E',nombre:'Juanma',apellidos:'Zamarreño Sanchez',initials:'JZ',admin:false},
-  '283':{dni:'45198366P',nombre:'Jorge',apellidos:'Garcia Gonzalez',initials:'JG',admin:false},
-  '286':{dni:'35768683A',nombre:'José Mª',apellidos:'Blanco Mendez',initials:'JM',admin:false},
-  '287':{dni:'15249379B',nombre:'Mikel',apellidos:'Iglesias Urroz',initials:'MI',admin:false},
-  '288':{dni:'44133821H',nombre:'Fco. Javier',apellidos:'Gonzalez Otero',initials:'FJ',admin:false},
-  '290':{dni:'15241511D',nombre:'Juan Manuel',apellidos:'Muñoa Garmenidia',initials:'JM',admin:false},
-  '292':{dni:'15245546L',nombre:'Luis Antonio',apellidos:'Sanchez Cano',initials:'LA',admin:false},
-  '294':{dni:'15256834Z',nombre:'Edurne',apellidos:'Izagirre Puy',initials:'EI',admin:false},
-  '296':{dni:'15257043Q',nombre:'Shanti',apellidos:'Erauso Amondarain',initials:'SE',admin:false},
-  '300':{dni:'44563665S',nombre:'Daniel',apellidos:'Iglesias Elia',initials:'DI',admin:false},
-  '302':{dni:'44558251Y',nombre:'David',apellidos:'Rubio Zamora',initials:'DR',admin:false},
-  '305':{dni:'15259386J',nombre:'Javier',apellidos:'Jimenez Arias',initials:'JJ',admin:false},
-  '306':{dni:'44552774A',nombre:'Iñigo',apellidos:'Corvo Solís',initials:'IC',admin:false},
-  '307':{dni:'15241804A',nombre:'José Miguel',apellidos:'Gracenea Alonso',initials:'JM',admin:false},
-  '309':{dni:'44551961H',nombre:'Javier',apellidos:'Dominguez Aizpiolea',initials:'JD',admin:false},
-  '310':{dni:'44560219L',nombre:'Ivan',apellidos:'Guitera Rubio',initials:'IG',admin:false},
-  '311':{dni:'15242646V',nombre:'Juan Antonio',apellidos:'Larraza Vasallo',initials:'JA',admin:false},
-  '312':{dni:'44559517F',nombre:'Imanol',apellidos:'Iñarra Arreche',initials:'II',admin:false},
-  '313':{dni:'15254668X',nombre:'José Antonio',apellidos:'Villasante Oliveira',initials:'JA',admin:false},
-  '314':{dni:'44573054C',nombre:'Unai',apellidos:'Iglesias Roncero',initials:'UI',admin:false},
-  '315':{dni:'44568215B',nombre:'Blanco Bernardo Naiara',apellidos:'',initials:'BB',admin:false},
-  '316':{dni:'15251843Z',nombre:'Manuel',apellidos:'Viñas Guardabrazos',initials:'MV',admin:false},
-  '317':{dni:'15252477G',nombre:'Daniel',apellidos:'Gómez Yanci',initials:'DG',admin:false},
-  '318':{dni:'15260997Z',nombre:'Oscar',apellidos:'Ginzo Fernandez',initials:'OG',admin:false},
-  '319':{dni:'45198480F',nombre:'Urki',apellidos:'Rojo Gil',initials:'UR',admin:false},
-  '320':{dni:'44566064E',nombre:'De Sande Rodríguez Mattin',apellidos:'',initials:'DS',admin:false},
-  '321':{dni:'15988444V',nombre:'Mario',apellidos:'González- Simancas Sanz',initials:'MG',admin:false},
-  '322':{dni:'49584194N',nombre:'Aitor',apellidos:'Arzua Uranga',initials:'AA',admin:false},
-  '323':{dni:'45197149X',nombre:'Mikel',apellidos:'Bermejo Izagirre',initials:'MB',admin:false},
-  '324':{dni:'44566302F',nombre:'Jon',apellidos:'Ballesteros Valencia',initials:'JB',admin:false},
-  '325':{dni:'70810125W',nombre:'David',apellidos:'Diaz Camarero',initials:'DD',admin:false},
-  '326':{dni:'44564490N',nombre:'Joseba',apellidos:'Larzabal Moreno',initials:'JL',admin:false},
-  '327':{dni:'15251641L',nombre:'Pello',apellidos:'Quiñones Lerchundi',initials:'PQ',admin:false},
-  '328':{dni:'15257872V',nombre:'Alvaro',apellidos:'Bermejo Gonzalez',initials:'AB',admin:false},
-  '330':{dni:'15259349E',nombre:'Carrero Gonzalez Jose',apellidos:'',initials:'CG',admin:false},
-  '331':{dni:'44561028T',nombre:'Mikel',apellidos:'Estomba Fernadez',initials:'ME',admin:false},
-  '332':{dni:'44550387P',nombre:'Eduardo',apellidos:'Garcia Aguado',initials:'EG',admin:false},
-  '333':{dni:'72461311H',nombre:'Jagoba',apellidos:'Zabalo Martin',initials:'JZ',admin:false},
-  '334':{dni:'44565527Z',nombre:'Oliver',apellidos:'Rubio Zamora',initials:'OR',admin:false},
-  '335':{dni:'15257900E',nombre:'Iñaki',apellidos:'Escudero Ramos',initials:'IE',admin:false},
-  '337':{dni:'72584555M',nombre:'Mugruza Osinalde Eneko',apellidos:'',initials:'MO',admin:false},
-  '338':{dni:'72660366P',nombre:'Martinez Picabea Jose Javier',apellidos:'',initials:'MP',admin:false},
-  '339':{dni:'15251696M',nombre:'Nikasio',apellidos:'Unsain Galarza',initials:'NU',admin:false},
-  '340':{dni:'15260535N',nombre:'Arantxa',apellidos:'Izagirre Puy',initials:'AI',admin:false},
-  '341':{dni:'44560590E',nombre:'Borja',apellidos:'Olazabal Toro',initials:'BO',admin:false},
-  '342':{dni:'44550442V',nombre:'Alberto',apellidos:'Rodriguez Martin',initials:'AR',admin:false},
-  '343':{dni:'28646349X',nombre:'Ignacio',apellidos:'Garcia Alonso',initials:'IG',admin:false},
-  '344':{dni:'44557655P',nombre:'Arkaitz',apellidos:'Otegui Gravina',initials:'AO',admin:false},
-  '345':{dni:'15256932C',nombre:'Oyarzun Lesaka Kristina',apellidos:'',initials:'OL',admin:false},
-  '346':{dni:'73511599B',nombre:'Nieva Pereyra Juan Carlos',apellidos:'',initials:'NP',admin:false},
-  '347':{dni:'44554232N',nombre:'Fran',apellidos:'Merino Modenes',initials:'FM',admin:false},
-  '348':{dni:'15933809F',nombre:'Francisco',apellidos:'Sanchez Granado',initials:'FS',admin:false},
-  '349':{dni:'44552260H',nombre:'Juanma',apellidos:'Crespo Nuñez',initials:'JC',admin:false},
-  '350':{dni:'445500665X',nombre:'Ekaitz',apellidos:'Azpiolea Ratero',initials:'EA',admin:false},
-  '351':{dni:'72661051A',nombre:'Ramón',apellidos:'Alzuri Huici',initials:'RA',admin:false},
-  '352':{dni:'15251109Q',nombre:'Miguel Lorenzo',apellidos:'Eguigure Jimenez',initials:'ML',admin:false},
-  '353':{dni:'445558006Z',nombre:'Juan Manuel',apellidos:'Rodriguez Garcia',initials:'JM',admin:false},
-  '354':{dni:'44561311F',nombre:'Mikel',apellidos:'López Guerra',initials:'ML',admin:false},
-  '355':{dni:'44563951W',nombre:'Ignacio',apellidos:'Larrea Iturria',initials:'IL',admin:false},
-  '356':{dni:'44559106X',nombre:'Jose Antonio',apellidos:'Larrea Iturria',initials:'JA',admin:false},
-  '358':{dni:'51283573J',nombre:'Erauso Sarasola Aiur',apellidos:'',initials:'ES',admin:false},
-  '359':{dni:'44551132V',nombre:'Larrechea Barcenilla Ainhoa',apellidos:'',initials:'LB',admin:false},
-  '360':{dni:'15254394N',nombre:'Toledano Barcenas Blas',apellidos:'',initials:'TB',admin:false},
-  '361':{dni:'44553930D',nombre:'Saenz Zuñiga Jon',apellidos:'',initials:'SZ',admin:false},
-  '362':{dni:'44559001C',nombre:'Andoitz Villafranca',apellidos:'',initials:'AV',admin:false},
-  '363':{dni:'44574412K',nombre:'Ivan Gomez Izaguirre',apellidos:'',initials:'IG',admin:false},
-  '364':{dni:'15249914V',nombre:'Santiago Gomez Pombar',apellidos:'',initials:'SG',admin:false},
-  '365':{dni:'55301711M',nombre:'Beñat Cabrero Arzuaga',apellidos:'',initials:'BC',admin:false},
-  '366':{dni:'44551950F',nombre:'Javier Roda Olasagasti',apellidos:'',initials:'JR',admin:false},
-  '367':{dni:'15247632N',nombre:'Iñaki Bergara Alejos',apellidos:'',initials:'IB',admin:false},
-  '368':{dni:'15931408K',nombre:'Jon Zubeldia Telletxea',apellidos:'',initials:'JZ',admin:false},
-  '369':{dni:'44551251K',nombre:'Jaime Bilbao Caballero',apellidos:'',initials:'JB',admin:false},
-  '370':{dni:'44676603T',nombre:'Aitor Molinuevo Madinabeitia',apellidos:'',initials:'AM',admin:false},
-  '371':{dni:'49582185G',nombre:'Maite Berges Castaño',apellidos:'',initials:'MB',admin:false},
-  '372':{dni:'15248311R',nombre:'Maria Carmen Martin Morcillo',apellidos:'',initials:'MC',admin:false},
-  '373':{dni:'44572400X',nombre:'Nestor Carredano Solanilla',apellidos:'',initials:'NC',admin:false},
-  '374':{dni:'44553733L',nombre:'Ignacio Argain Fernadez',apellidos:'',initials:'IA',admin:false},
-  '375':{dni:'15232299C',nombre:'M.ª Pilar Urizarna Ruiz',apellidos:'',initials:'MP',admin:false},
-  '376':{dni:'51283606T',nombre:'Gorka Zamarreño',apellidos:'',initials:'GZ',admin:false},
-  '377':{dni:'44565551S',nombre:'Gorka Gracia Perez',apellidos:'',initials:'GG',admin:false},
-  '378':{dni:'44173879X',nombre:'Ander Tubillas Quintas',apellidos:'',initials:'AT',admin:false}
+  '000':{dni:'ADMIN2024',nombre:'Administrador',apellidos:'',initials:'AD',tel:'',admin:true},
+  '004':{dni:'15230382N',nombre:'Luis Maria',apellidos:'Ausan Etxeberria',initials:'LM',tel:'',admin:false},
+  '005':{dni:'15226757K',nombre:'Salvador',apellidos:'Ribera Garin',initials:'SR',tel:'658745178',admin:false},
+  '006':{dni:'15226680J',nombre:'Pablo',apellidos:'Huarte Zabala',initials:'PH',tel:'',admin:false},
+  '008':{dni:'15230802H',nombre:'Vicente',apellidos:'Larzabal Larraza',initials:'VL',tel:'',admin:false},
+  '009':{dni:'15232292J',nombre:'Angel',apellidos:'Saiz-Calderon Frances',initials:'AS',tel:'',admin:false},
+  '011':{dni:'15227272F',nombre:'Carlos Ignacio',apellidos:'Rodriguez Artia',initials:'CI',tel:'607910855',admin:false},
+  '012':{dni:'15231985M',nombre:'Javier',apellidos:'Uranga Jauregui',initials:'JU',tel:'',admin:false},
+  '013':{dni:'15233738X',nombre:'Juan Jose',apellidos:'Garagarza Alonso',initials:'JJ',tel:'',admin:false},
+  '014':{dni:'15230156Q',nombre:'Francisco Jose',apellidos:'Perez Santana',initials:'FJ',tel:'',admin:false},
+  '020':{dni:'15239404H',nombre:'Antxon',apellidos:'Mendia Eguren',initials:'AM',tel:'',admin:false},
+  '030':{dni:'00000000X',nombre:'Alberto',apellidos:'Hernandez Vicente',initials:'AH',tel:'',admin:false},
+  '044':{dni:'15231888T',nombre:'Koldo',apellidos:'Gojenola Etxeberria',initials:'KG',tel:'',admin:false},
+  '054':{dni:'15228939H',nombre:'Jose',apellidos:'Rodriguez Marquez',initials:'JR',tel:'607883009',admin:false},
+  '057':{dni:'15237717X',nombre:'Nicasio',apellidos:'Ugartemendia Arocena',initials:'NU',tel:'',admin:false},
+  '062':{dni:'15243547K',nombre:'Alberto',apellidos:'Berges Ausan',initials:'AB',tel:'',admin:false},
+  '068':{dni:'15242780J',nombre:'Txema',apellidos:'Sagredo Santxo',initials:'TS',tel:'',admin:false},
+  '069':{dni:'15230000K',nombre:'Jose Javier',apellidos:'Gojenola Etxeberria',initials:'JJ',tel:'',admin:false},
+  '086':{dni:'15230773N',nombre:'Eduardo',apellidos:'Rodriguez Gonzalez',initials:'ER',tel:'',admin:false},
+  '112':{dni:'15234669K',nombre:'Manuel',apellidos:'Rodriguez Jimenez',initials:'MR',tel:'',admin:false},
+  '120':{dni:'15230287D',nombre:'Jose Javier',apellidos:'Gracia Lapitz',initials:'JJ',tel:'',admin:false},
+  '129':{dni:'15239023M',nombre:'Jose Maria',apellidos:'Beloki Galarza',initials:'JM',tel:'',admin:false},
+  '135':{dni:'00000000X',nombre:'Daniel',apellidos:'Barahona Alonso',initials:'DB',tel:'',admin:false},
+  '137':{dni:'15230602W',nombre:'Vicente',apellidos:'Soria Jorge',initials:'VS',tel:'',admin:false},
+  '153':{dni:'15243029D',nombre:'Francisco Javier',apellidos:'Beloki Galarza',initials:'FJ',tel:'',admin:false},
+  '154':{dni:'15889440M',nombre:'Pedro Maria',apellidos:'Barrutia Vicente',initials:'PM',tel:'',admin:false},
+  '157':{dni:'15244007K',nombre:'Carlos',apellidos:'Ferreira Sanchez',initials:'CF',tel:'630686150',admin:false},
+  '163':{dni:'15244694H',nombre:'Felix',apellidos:'Lekuona Otegi',initials:'FL',tel:'629047240',admin:false},
+  '167':{dni:'15239915T',nombre:'Juan',apellidos:'Martinez Martiarena',initials:'JM',tel:'666559108',admin:false},
+  '169':{dni:'15237203W',nombre:'Juan Miguel',apellidos:'Etxeberria Lasa',initials:'JM',tel:'652687632',admin:false},
+  '171':{dni:'15239062K',nombre:'Eusebio',apellidos:'Gil Carrillo',initials:'EG',tel:'620480012',admin:false},
+  '184':{dni:'15230804C',nombre:'Jesus',apellidos:'Iruretagoiena Amiano',initials:'JI',tel:'',admin:false},
+  '193':{dni:'15244217R',nombre:'Fco. Javier',apellidos:'Arranz Molinero',initials:'FJ',tel:'617374143',admin:false},
+  '195':{dni:'00000000X',nombre:'Martin',apellidos:'Larruskain Cabedo',initials:'ML',tel:'',admin:false},
+  '202':{dni:'15240871J',nombre:'Manuel',apellidos:'Bravo Aranda',initials:'MB',tel:'',admin:false},
+  '211':{dni:'00000000X',nombre:'Rafael',apellidos:'Gonzalez Urtizberea',initials:'RG',tel:'',admin:false},
+  '213':{dni:'15248068B',nombre:'Ricardo',apellidos:'Larrasa Martin',initials:'RL',tel:'',admin:false},
+  '216':{dni:'00000000X',nombre:'Tomás',apellidos:'García Conde',initials:'TG',tel:'',admin:false},
+  '218':{dni:'15240044Z',nombre:'Juan Jose',apellidos:'Errazkin Saiz',initials:'JJ',tel:'',admin:false},
+  '222':{dni:'15260748H',nombre:'Iñigo',apellidos:'Ausan Elosegui',initials:'IA',tel:'',admin:false},
+  '224':{dni:'15243456E',nombre:'Juan Mª',apellidos:'Galarza Peñagaricano',initials:'JM',tel:'',admin:false},
+  '225':{dni:'15243891C',nombre:'Juan Antonio',apellidos:'Rodriguez Diez',initials:'JA',tel:'',admin:false},
+  '227':{dni:'15242949K',nombre:'Proko',apellidos:'Gomez Pinto',initials:'PG',tel:'',admin:false},
+  '229':{dni:'00000000X',nombre:'Garikoitz',apellidos:'Larraburu Vertiz',initials:'GL',tel:'617804651',admin:false},
+  '231':{dni:'15259457.',nombre:'Iñaki',apellidos:'Etxaniz Sein',initials:'IE',tel:'619976763',admin:false},
+  '232':{dni:'44556366.',nombre:'Iñaki',apellidos:'Lasa Etxabe',initials:'IL',tel:'600637934',admin:false},
+  '233':{dni:'15255877T',nombre:'Vicente',apellidos:'Torres Jimenez',initials:'VT',tel:'607261080',admin:false},
+  '235':{dni:'00000000X',nombre:'Eusebio',apellidos:'Hernandez Rodriguez',initials:'EH',tel:'627206476',admin:false},
+  '236':{dni:'72662240L',nombre:'Antxon',apellidos:'Moreno Gama',initials:'AM',tel:'',admin:false},
+  '237':{dni:'15254642F',nombre:'Juan Carlos',apellidos:'Santamaria Espiga',initials:'JC',tel:'609109557',admin:false},
+  '238':{dni:'15257706N',nombre:'Fernando',apellidos:'Celaya Segurola',initials:'FC',tel:'639955324',admin:false},
+  '239':{dni:'00000000X',nombre:'Alvaro',apellidos:'Mendi Aliende',initials:'AM',tel:'',admin:false},
+  '240':{dni:'15229354L',nombre:'Alberto',apellidos:'Fernandez Camarero',initials:'AF',tel:'695745629',admin:false},
+  '244':{dni:'15255884F',nombre:'Eduardo',apellidos:'Ruiz Fernandez',initials:'ER',tel:'646288440',admin:false},
+  '245':{dni:'44551280G',nombre:'Javier',apellidos:'Avila Gil',initials:'JA',tel:'',admin:false},
+  '247':{dni:'00000000X',nombre:'Jose Antonio',apellidos:'Soria Avila',initials:'JA',tel:'',admin:false},
+  '248':{dni:'00000000X',nombre:'Jose Luis',apellidos:'Olazabal Ortiz',initials:'JL',tel:'',admin:false},
+  '250':{dni:'44552001.',nombre:'Juan Manuel',apellidos:'Garate Cepa',initials:'JM',tel:'656744922',admin:false},
+  '257':{dni:'00000000X',nombre:'Alberto',apellidos:'Santiago Sevilla',initials:'AS',tel:'607333925',admin:false},
+  '258':{dni:'44550666B',nombre:'Ruben',apellidos:'Martin Melero',initials:'RM',tel:'',admin:false},
+  '259':{dni:'15260771H',nombre:'Jose Ignacio',apellidos:'Zamarreño Sanchez',initials:'JI',tel:'651703476',admin:false},
+  '263':{dni:'00000000X',nombre:'Gaizka',apellidos:'Lekuona Errazkin',initials:'GL',tel:'',admin:false},
+  '264':{dni:'00000000X',nombre:'Iñaki',apellidos:'Arzuaga Iribarren',initials:'IA',tel:'615755342',admin:false},
+  '265':{dni:'15257755S',nombre:'Miguel Angel',apellidos:'Garcia Estevez',initials:'MA',tel:'',admin:false},
+  '266':{dni:'15996544K',nombre:'Rafael',apellidos:'Amigo Martinez',initials:'RA',tel:'',admin:false},
+  '268':{dni:'15254808N',nombre:'Jon Karla',apellidos:'Vielba Quintana',initials:'JK',tel:'677089437',admin:false},
+  '272':{dni:'44560933C',nombre:'David',apellidos:'Saez Azkargorta',initials:'DS',tel:'666663258',admin:false},
+  '273':{dni:'15889353X',nombre:'Jose Luis',apellidos:'Sixto Rey',initials:'JL',tel:'627158218',admin:false},
+  '274':{dni:'44562965M',nombre:'Joseba',apellidos:'Garagarza Lazaro',initials:'JG',tel:'645006405',admin:false},
+  '276':{dni:'15255821J',nombre:'Gorka',apellidos:'Arbelaiz Emazabel',initials:'GA',tel:'665734716',admin:false},
+  '277':{dni:'15243547K',nombre:'Lourdes',apellidos:'Darceles Olaizola',initials:'LD',tel:'669710753',admin:false},
+  '278':{dni:'15257909P',nombre:'Roberto',apellidos:'Mendaña Castro',initials:'RM',tel:'655714194',admin:false},
+  '280':{dni:'15242283E',nombre:'Beñardo',apellidos:'Rojo Galardi',initials:'BR',tel:'',admin:false},
+  '281':{dni:'15250540E',nombre:'Juanma',apellidos:'Zamarreño Sanchez',initials:'JZ',tel:'616245351',admin:false},
+  '283':{dni:'45198366P',nombre:'Jorge',apellidos:'Garcia Gonzalez',initials:'JG',tel:'638070619',admin:false},
+  '286':{dni:'35768683A',nombre:'José Mª',apellidos:'Blanco Mendez',initials:'JM',tel:'609151884',admin:false},
+  '287':{dni:'15249379B',nombre:'Mikel',apellidos:'Iglesias Urroz',initials:'MI',tel:'638579752',admin:false},
+  '288':{dni:'44133821H',nombre:'Fco. Javier',apellidos:'Gonzalez Otero',initials:'FJ',tel:'639333519',admin:false},
+  '290':{dni:'15241511D',nombre:'Juan Manuel',apellidos:'Muñoa Garmenidia',initials:'JM',tel:'688662137',admin:false},
+  '292':{dni:'15245546L',nombre:'Luis Antonio',apellidos:'Sanchez Cano',initials:'LA',tel:'685740038',admin:false},
+  '294':{dni:'15256834Z',nombre:'Edurne',apellidos:'Izagirre Puy',initials:'EI',tel:'656777366',admin:false},
+  '296':{dni:'15257043Q',nombre:'Shanti',apellidos:'Erauso Amondarain',initials:'SE',tel:'686745002',admin:false},
+  '300':{dni:'44563665S',nombre:'Daniel',apellidos:'Iglesias Elia',initials:'DI',tel:'639706946',admin:false},
+  '302':{dni:'44558251Y',nombre:'David',apellidos:'Rubio Zamora',initials:'DR',tel:'656779890',admin:false},
+  '305':{dni:'15259386J',nombre:'Javier',apellidos:'Jimenez Arias',initials:'JJ',tel:'615702296',admin:false},
+  '306':{dni:'44552774A',nombre:'Iñigo',apellidos:'Corvo Solís',initials:'IC',tel:'685735988',admin:false},
+  '307':{dni:'15241804A',nombre:'José Miguel',apellidos:'Gracenea Alonso',initials:'JM',tel:'',admin:false},
+  '309':{dni:'44551961H',nombre:'Javier',apellidos:'Dominguez Aizpiolea',initials:'JD',tel:'617605769',admin:false},
+  '310':{dni:'44560219L',nombre:'Ivan',apellidos:'Guitera Rubio',initials:'IG',tel:'615004196',admin:false},
+  '311':{dni:'15242646V',nombre:'Juan Antonio',apellidos:'Larraza Vasallo',initials:'JA',tel:'605762884',admin:false},
+  '312':{dni:'44559517F',nombre:'Imanol',apellidos:'Iñarra Arreche',initials:'II',tel:'656773895',admin:false},
+  '313':{dni:'15254668X',nombre:'José Antonio',apellidos:'Villasante Oliveira',initials:'JA',tel:'606691750',admin:false},
+  '314':{dni:'44573054C',nombre:'Unai',apellidos:'Iglesias Roncero',initials:'UI',tel:'630921230',admin:false},
+  '315':{dni:'44568215B',nombre:'Blanco Bernardo Naiara',apellidos:'',initials:'BB',tel:'658913916',admin:false},
+  '316':{dni:'15251843Z',nombre:'Manuel',apellidos:'Viñas Guardabrazos',initials:'MV',tel:'685727019',admin:false},
+  '317':{dni:'15252477G',nombre:'Daniel',apellidos:'Gómez Yanci',initials:'DG',tel:'619465576',admin:false},
+  '318':{dni:'15260997Z',nombre:'Oscar',apellidos:'Ginzo Fernandez',initials:'OG',tel:'629055966',admin:false},
+  '319':{dni:'45198480F',nombre:'Urki',apellidos:'Rojo Gil',initials:'UR',tel:'654748882',admin:false},
+  '320':{dni:'44566064E',nombre:'De Sande Rodríguez Mattin',apellidos:'',initials:'DS',tel:'608673068',admin:false},
+  '321':{dni:'15988444V',nombre:'Mario',apellidos:'González- Simancas Sanz',initials:'MG',tel:'629412594',admin:false},
+  '322':{dni:'49584194N',nombre:'Aitor',apellidos:'Arzua Uranga',initials:'AA',tel:'697327237',admin:false},
+  '323':{dni:'45197149X',nombre:'Mikel',apellidos:'Bermejo Izagirre',initials:'MB',tel:'640046620',admin:false},
+  '324':{dni:'44566302F',nombre:'Jon',apellidos:'Ballesteros Valencia',initials:'JB',tel:'615357447',admin:false},
+  '325':{dni:'70810125W',nombre:'David',apellidos:'Diaz Camarero',initials:'DD',tel:'645959992',admin:false},
+  '326':{dni:'44564490N',nombre:'Joseba',apellidos:'Larzabal Moreno',initials:'JL',tel:'690042164',admin:false},
+  '327':{dni:'15251641L',nombre:'Pello',apellidos:'Quiñones Lerchundi',initials:'PQ',tel:'600280260',admin:false},
+  '328':{dni:'15257872V',nombre:'Alvaro',apellidos:'Bermejo Gonzalez',initials:'AB',tel:'640176039',admin:false},
+  '330':{dni:'15259349E',nombre:'Carrero Gonzalez Jose',apellidos:'',initials:'CG',tel:'676234452',admin:false},
+  '331':{dni:'44561028T',nombre:'Mikel',apellidos:'Estomba Fernadez',initials:'ME',tel:'685751394',admin:false},
+  '332':{dni:'44550387P',nombre:'Eduardo',apellidos:'Garcia Aguado',initials:'EG',tel:'617906232',admin:false},
+  '333':{dni:'72461311H',nombre:'Jagoba',apellidos:'Zabalo Martin',initials:'JZ',tel:'618303572',admin:false},
+  '334':{dni:'44565527Z',nombre:'Oliver',apellidos:'Rubio Zamora',initials:'OR',tel:'695784994',admin:false},
+  '335':{dni:'15257900E',nombre:'Iñaki',apellidos:'Escudero Ramos',initials:'IE',tel:'637938337',admin:false},
+  '337':{dni:'72584555M',nombre:'Mugruza Osinalde Eneko',apellidos:'',initials:'MO',tel:'606741499',admin:false},
+  '338':{dni:'72660366P',nombre:'Martinez Picabea Jose Javier',apellidos:'',initials:'MP',tel:'626958432',admin:false},
+  '339':{dni:'15251696M',nombre:'Nikasio',apellidos:'Unsain Galarza',initials:'NU',tel:'653749553',admin:false},
+  '340':{dni:'15260535N',nombre:'Arantxa',apellidos:'Izagirre Puy',initials:'AI',tel:'625767697',admin:false},
+  '341':{dni:'44560590E',nombre:'Borja',apellidos:'Olazabal Toro',initials:'BO',tel:'619970935',admin:false},
+  '342':{dni:'44550442V',nombre:'Alberto',apellidos:'Rodriguez Martin',initials:'AR',tel:'637813799',admin:false},
+  '343':{dni:'28646349X',nombre:'Ignacio',apellidos:'Garcia Alonso',initials:'IG',tel:'647485438',admin:false},
+  '344':{dni:'44557655P',nombre:'Arkaitz',apellidos:'Otegui Gravina',initials:'AO',tel:'661164739',admin:false},
+  '345':{dni:'15256932C',nombre:'Oyarzun Lesaka Kristina',apellidos:'',initials:'OL',tel:'686849010',admin:false},
+  '346':{dni:'73511599B',nombre:'Nieva Pereyra Juan Carlos',apellidos:'',initials:'NP',tel:'645864958',admin:false},
+  '347':{dni:'44554232N',nombre:'Fran',apellidos:'Merino Modenes',initials:'FM',tel:'615790157',admin:false},
+  '348':{dni:'15933809F',nombre:'Francisco',apellidos:'Sanchez Granado',initials:'FS',tel:'680996370',admin:false},
+  '349':{dni:'44552260H',nombre:'Juanma',apellidos:'Crespo Nuñez',initials:'JC',tel:'696432210',admin:false},
+  '350':{dni:'445500665X',nombre:'Ekaitz',apellidos:'Azpiolea Ratero',initials:'EA',tel:'605728771',admin:false},
+  '351':{dni:'72661051A',nombre:'Ramón',apellidos:'Alzuri Huici',initials:'RA',tel:'640637573',admin:false},
+  '352':{dni:'15251109Q',nombre:'Miguel Lorenzo',apellidos:'Eguigure Jimenez',initials:'ML',tel:'610088545',admin:false},
+  '353':{dni:'445558006Z',nombre:'Juan Manuel',apellidos:'Rodriguez Garcia',initials:'JM',tel:'671070901',admin:false},
+  '354':{dni:'44561311F',nombre:'Mikel',apellidos:'López Guerra',initials:'ML',tel:'671852961',admin:false},
+  '355':{dni:'44563951W',nombre:'Ignacio',apellidos:'Larrea Iturria',initials:'IL',tel:'646795400',admin:false},
+  '356':{dni:'44559106X',nombre:'Jose Antonio',apellidos:'Larrea Iturria',initials:'JA',tel:'600858259',admin:false},
+  '358':{dni:'51283573J',nombre:'Erauso Sarasola Aiur',apellidos:'',initials:'ES',tel:'646042428',admin:false},
+  '359':{dni:'44551132V',nombre:'Larrechea Barcenilla Ainhoa',apellidos:'',initials:'LB',tel:'639732408',admin:false},
+  '360':{dni:'15254394N',nombre:'Toledano Barcenas Blas',apellidos:'',initials:'TB',tel:'620636073',admin:false},
+  '361':{dni:'44553930D',nombre:'Saenz Zuñiga Jon',apellidos:'',initials:'SZ',tel:'677489568',admin:false},
+  '362':{dni:'44559001C',nombre:'Andoitz Villafranca',apellidos:'',initials:'AV',tel:'617119561',admin:false},
+  '363':{dni:'44574412K',nombre:'Ivan Gomez Izaguirre',apellidos:'',initials:'IG',tel:'619465576',admin:false},
+  '364':{dni:'15249914V',nombre:'Santiago Gomez Pombar',apellidos:'',initials:'SG',tel:'619416462',admin:false},
+  '365':{dni:'55301711M',nombre:'Beñat Cabrero Arzuaga',apellidos:'',initials:'BC',tel:'664379912',admin:false},
+  '366':{dni:'44551950F',nombre:'Javier Roda Olasagasti',apellidos:'',initials:'JR',tel:'628321448',admin:false},
+  '367':{dni:'15247632N',nombre:'Iñaki Bergara Alejos',apellidos:'',initials:'IB',tel:'663004487',admin:false},
+  '368':{dni:'15931408K',nombre:'Jon Zubeldia Telletxea',apellidos:'',initials:'JZ',tel:'656756641',admin:false},
+  '369':{dni:'44551251K',nombre:'Jaime Bilbao Caballero',apellidos:'',initials:'JB',tel:'670357346',admin:false},
+  '370':{dni:'44676603T',nombre:'Aitor Molinuevo Madinabeitia',apellidos:'',initials:'AM',tel:'629046662‬',admin:false},
+  '371':{dni:'49582185G',nombre:'Maite Berges Castaño',apellidos:'',initials:'MB',tel:'',admin:false},
+  '372':{dni:'15248311R',nombre:'Maria Carmen Martin Morcillo',apellidos:'',initials:'MC',tel:'699363742',admin:false},
+  '373':{dni:'44572400X',nombre:'Nestor Carredano Solanilla',apellidos:'',initials:'NC',tel:'639959790',admin:false},
+  '374':{dni:'44553733L',nombre:'Ignacio Argain Fernadez',apellidos:'',initials:'IA',tel:'658728665',admin:false},
+  '375':{dni:'15232299C',nombre:'M.ª Pilar Urizarna Ruiz',apellidos:'',initials:'MP',tel:'677032681',admin:false},
+  '376':{dni:'51283606T',nombre:'Gorka Zamarreño',apellidos:'',initials:'GZ',tel:'688841552',admin:false},
+  '377':{dni:'44565551S',nombre:'Gorka Gracia Perez',apellidos:'',initials:'GG',tel:'656744825',admin:false},
+  '378':{dni:'44173879X',nombre:'Ander Tubillas Quintas',apellidos:'',initials:'AT',tel:'665726350',admin:false}
 };
 
 // ── CARTA ────────────────────────────────────────────────────
@@ -541,11 +578,23 @@ async function doLogin(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   btn.innerHTML='Entrar';btn.disabled=false;
+  // Ocultar pestaña Carta en móvil
+  if(window.innerWidth < 768){
+    document.getElementById('tab-btn-carta').style.display='none';
+  }
   if(s.admin){
     document.getElementById('admin-badge').style.display='inline';
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
   }
-  updateCocinaPrice();
+  // En móvil (pantalla pequeña) ir directamente a Mis notas
+  // En tablet/ordenador (pantalla grande) ir a Carta para hacer notas
+  const esPantallaGrande = window.innerWidth >= 768;
+  if(esPantallaGrande){
+    updateCocinaPrice();
+    switchTab('carta');
+  } else {
+    switchTab('historial');
+  }
 }
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
@@ -825,23 +874,37 @@ function renderAdmin(){
     '<div class="stat-card"><div class="stat-num">'+fmt2(tarjetaSum)+'€</div><div class="stat-label">Tarjeta</div></div>';
   const list=document.getElementById('admin-list');
   if(!filt.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>No hay notas registradas.</p></div>';return;}
-  list.innerHTML=filt.map(n=>{
+  list.innerHTML=filt.map(function(n,idx){
     const d=new Date(n.created_at);
     const fechaStr=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     const lineas=JSON.parse(n.lineas||'[]');
-    const resumen=lineas.slice(0,3).map(l=>l.qty+'x '+l.nombre).join(', ')+(lineas.length>3?'…':'');
+    let detalleHtml='';
+    lineas.forEach(function(l){
+      detalleHtml+='<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.2rem 0;border-bottom:1px solid var(--border);">'+
+        '<span>'+l.qty+'x '+l.nombre+'</span>'+
+        '<span style="color:var(--text-muted)">'+fmt2(l.subtotal)+'€</span>'+
+      '</div>';
+    });
+    const aid='a'+idx;
     return '<div class="nota-item">'+
-      '<div class="nota-socio">'+sN(n.socio_num)+' · Socio nº '+parseInt(n.socio_num)+'</div>'+
-      '<div class="nota-header">'+
+      '<div style="font-size:.78rem;font-weight:600;margin-bottom:.3rem;color:var(--brown)">'+sN(n.socio_num)+' · Nº '+parseInt(n.socio_num)+'</div>'+
+      '<div class="nota-header" data-aid="'+aid+'" onclick="toggleNota(this.dataset.aid)" style="cursor:pointer;">'+
         '<span class="nota-fecha">'+fechaStr+'</span>'+
-        '<span class="nota-total">'+fmt2(n.total)+'€</span>'+
+        '<div style="display:flex;align-items:center;gap:.5rem;">'+
+          '<span class="nota-total">'+fmt2(n.total)+'€</span>'+
+          '<span id="arrow-'+aid+'" style="color:var(--text-muted);font-size:.9rem;transition:transform .2s">▾</span>'+
+        '</div>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.3rem;flex-wrap:wrap">'+
+      '<div style="display:flex;align-items:center;gap:.5rem;margin:.35rem 0;flex-wrap:wrap">'+
         '<span class="nota-pago '+n.forma_pago+'">'+(n.forma_pago==='efectivo'?'💵 Efectivo':'💳 Tarjeta')+'</span>'+
         (n.turno?'<span style="font-size:.68rem;padding:.18rem .5rem;border-radius:20px;background:rgba(201,168,76,.15);color:var(--brown);">'+(n.turno==='comida'?'🍽️ Comida':n.turno==='merienda'?'☕ Merienda':'🌙 Cena')+(n.comensales?' · '+n.comensales+' pers.':'')+'</span>':'')+
         (n.propina>0?'<span style="font-size:.7rem;color:var(--text-muted)">+'+fmt2(n.propina)+'€ propina</span>':'')+
       '</div>'+
-      '<div class="nota-linea">'+resumen+'</div>'+
+      '<div id="detalle-'+aid+'" style="display:none;margin-top:.4rem;">'+
+        detalleHtml+
+        (n.propina>0?'<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.3rem 0;color:var(--text-muted);"><span>Propina</span><span>'+fmt2(n.propina)+'€</span></div>':'')+
+        '<div style="display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;padding:.4rem 0;border-top:2px solid var(--dark);margin-top:.2rem;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
+      '</div>'+
     '</div>';
   }).join('');
 }
@@ -851,7 +914,84 @@ function switchTab(tab){
   ['carta','historial','admin'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['carta','historial','admin'][i]===tab));
   if(tab==='historial')renderHistorial();
-  if(tab==='admin')renderAdmin();
+  if(tab==='admin'){renderAdmin();renderCartaAdmin();}
+}
+
+// -- GESTION CARTA -----------------------------------------------
+let editingProducto=null; // {catIdx, itemIdx} or null for new
+
+function renderCartaAdmin(){
+  const list=document.getElementById('carta-admin-list');
+  if(!list)return;
+  let html='';
+  CARTA.forEach(function(cat,ci){
+    html+='<div style="margin-bottom:.75rem;">'+
+      '<div style="font-size:.9rem;font-weight:600;color:var(--gold);padding:.4rem .75rem;background:var(--dark);border-radius:8px;margin-bottom:.4rem;">'+cat.icon+' '+cat.cat+'</div>';
+    cat.items.forEach(function(item,ii){
+      html+='<div style="display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.55rem .85rem;margin-bottom:.3rem;gap:.5rem;">'+
+        '<span style="flex:1;font-size:.85rem;">'+item.nombre+'</span>'+
+        '<span style="font-size:.85rem;font-weight:600;min-width:3rem;text-align:right;">'+fmt2(item.precio)+'€</span>'+
+        '<button onclick="openEditProducto('+ci+','+ii+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--brown);margin-left:.4rem;">Editar</button>'+
+        '<button onclick="deleteProducto('+ci+','+ii+')" style="background:none;border:1px solid rgba(139,32,32,.3);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--red);">✕</button>'+
+      '</div>';
+    });
+    html+='</div>';
+  });
+  list.innerHTML=html;
+}
+
+function openAddProducto(){
+  editingProducto=null;
+  document.getElementById('producto-modal-title').textContent='Nuevo producto';
+  document.getElementById('pm-nombre').value='';
+  document.getElementById('pm-precio').value='';
+  document.getElementById('pm-error').style.display='none';
+  document.getElementById('producto-modal').classList.add('show');
+}
+
+function openEditProducto(ci,ii){
+  editingProducto={ci,ii};
+  const item=CARTA[ci].items[ii];
+  document.getElementById('producto-modal-title').textContent='Editar producto';
+  document.getElementById('pm-cat').value=CARTA[ci].cat;
+  document.getElementById('pm-nombre').value=item.nombre;
+  document.getElementById('pm-precio').value=item.precio;
+  document.getElementById('pm-error').style.display='none';
+  document.getElementById('producto-modal').classList.add('show');
+}
+
+function closeProductoModal(){
+  document.getElementById('producto-modal').classList.remove('show');
+  editingProducto=null;
+}
+
+function saveProducto(){
+  const catNombre=document.getElementById('pm-cat').value;
+  const nombre=document.getElementById('pm-nombre').value.trim();
+  const precio=parseFloat(document.getElementById('pm-precio').value);
+  const err=document.getElementById('pm-error');
+  if(!nombre){err.textContent='El nombre es obligatorio.';err.style.display='block';return;}
+  if(isNaN(precio)||precio<0){err.textContent='Introduce un precio válido.';err.style.display='block';return;}
+  const cat=CARTA.find(c=>c.cat===catNombre);
+  if(!cat)return;
+  if(editingProducto!==null){
+    CARTA[editingProducto.ci].items[editingProducto.ii]={nombre,precio};
+  } else {
+    cat.items.push({nombre,precio});
+  }
+  closeProductoModal();
+  renderCartaAdmin();
+  renderCarta();
+  showToast(editingProducto?'✓ Producto actualizado':'✓ Producto añadido');
+}
+
+function deleteProducto(ci,ii){
+  const item=CARTA[ci].items[ii];
+  if(!confirm('¿Eliminar "'+item.nombre+'"?'))return;
+  CARTA[ci].items.splice(ii,1);
+  renderCartaAdmin();
+  renderCarta();
+  showToast('Producto eliminado');
 }
 
 function showToast(msg){
