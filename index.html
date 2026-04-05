@@ -149,21 +149,15 @@
       <p>Sociedad Gastronómica</p>
     </div>
     <div class="login-form">
-      <!-- Honeypot fields to prevent browser autofill -->
-      <div style="display:none;"><input type="text" name="username"><input type="password" name="password"></div>
       <div class="field-group">
         <label>Número de socio</label>
-        <input type="text" id="login-user" placeholder="Ej: 042" 
-          autocomplete="off" inputmode="numeric" 
-          readonly onfocus="this.removeAttribute('readonly')"
-          style="background:rgba(255,255,255,.06);">
+        <input type="text" id="login-user" placeholder="Ej: 042"
+          autocomplete="off" inputmode="numeric">
       </div>
       <div class="field-group">
         <label>DNI</label>
-        <input type="text" id="login-pass" placeholder="Ej: 12345678A"
-          autocomplete="off"
-          readonly onfocus="this.removeAttribute('readonly');this.type='password'"
-          style="background:rgba(255,255,255,.06);">
+        <input type="password" id="login-pass" placeholder="Ej: 12345678A"
+          autocomplete="new-password">
         <div class="error-msg" id="login-error">Número de socio o DNI incorrecto</div>
       </div>
       <button class="btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
