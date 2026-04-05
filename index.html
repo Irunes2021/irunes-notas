@@ -215,22 +215,34 @@
 
   <!-- ADMIN -->
   <div id="tab-admin" class="content" style="display:none">
-    <div class="admin-stats" id="admin-stats"></div>
-    <div class="section-title">Filtrar</div>
-    <div class="admin-filters">
-      <div class="filter-chip active" onclick="setAdminFilter('todos',this)">Todos</div>
-      <div class="filter-chip" onclick="setAdminFilter('efectivo',this)">💵 Efectivo</div>
-      <div class="filter-chip" onclick="setAdminFilter('tarjeta',this)">💳 Tarjeta</div>
+    <!-- Admin subtabs -->
+    <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
+      <button class="filter-chip active" id="subtab-btn-notas" onclick="switchAdminTab('notas',this)">📋 Notas</button>
+      <button class="filter-chip" id="subtab-btn-carta" onclick="switchAdminTab('carta',this)">🍽️ Carta</button>
     </div>
-    <div class="divider"></div>
-    <div class="section-title">Últimas notas</div>
-    <div id="admin-list"></div>
-    <div class="divider"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
-      <div class="section-title" style="margin-bottom:0">🍽️ Gestión de la carta</div>
-      <button class="filter-chip" onclick="openAddProducto()" style="background:var(--dark);color:var(--gold);border-color:rgba(201,168,76,.3)">+ Añadir</button>
+
+    <!-- Subtab: Notas -->
+    <div id="subtab-notas">
+      <div class="admin-stats" id="admin-stats"></div>
+      <div class="section-title">Filtrar</div>
+      <div class="admin-filters">
+        <div class="filter-chip active" onclick="setAdminFilter('todos',this)">Todos</div>
+        <div class="filter-chip" onclick="setAdminFilter('efectivo',this)">💵 Efectivo</div>
+        <div class="filter-chip" onclick="setAdminFilter('tarjeta',this)">💳 Tarjeta</div>
+      </div>
+      <div class="divider"></div>
+      <div class="section-title">Últimas notas</div>
+      <div id="admin-list"></div>
     </div>
-    <div id="carta-admin-list"></div>
+
+    <!-- Subtab: Carta -->
+    <div id="subtab-carta" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.7rem;">
+        <div class="section-title" style="margin-bottom:0">Productos y precios</div>
+        <button class="filter-chip" onclick="openAddProducto()" style="background:var(--dark);color:var(--gold);border-color:rgba(201,168,76,.3)">+ Añadir</button>
+      </div>
+      <div id="carta-admin-list"></div>
+    </div>
 
     <!-- Modal nuevo producto -->
     <div class="modal-overlay" id="producto-modal">
@@ -992,6 +1004,14 @@ function deleteProducto(ci,ii){
   renderCartaAdmin();
   renderCarta();
   showToast('Producto eliminado');
+}
+
+function switchAdminTab(tab,el){
+  document.getElementById('subtab-notas').style.display=tab==='notas'?'block':'none';
+  document.getElementById('subtab-carta').style.display=tab==='carta'?'block':'none';
+  document.querySelectorAll('[id^="subtab-btn-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(tab==='carta') renderCartaAdmin();
 }
 
 function showToast(msg){
