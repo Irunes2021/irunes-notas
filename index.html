@@ -130,6 +130,7 @@
   .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--text-muted);}
   .empty-state .empty-icon{font-size:2.5rem;margin-bottom:.75rem;}
   .empty-state p{font-size:.83rem;line-height:1.6;}
+  .btn-inicio{position:fixed;top:.6rem;left:.75rem;background:rgba(26,18,8,.85);color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:.35rem .85rem;font-family:'DM Sans',sans-serif;font-size:.75rem;cursor:pointer;z-index:200;display:none;backdrop-filter:blur(4px);text-decoration:none;}
   .toast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dark);color:var(--gold);padding:.7rem 1.4rem;border-radius:100px;font-size:.83rem;font-weight:500;border:1px solid rgba(201,168,76,.3);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:1000;white-space:nowrap;}
   .toast.show{transform:translateX(-50%) translateY(0);}
 
@@ -348,6 +349,7 @@
   </div>
 </div>
 
+<a class="btn-inicio" id="btn-inicio" href="https://inicio.ccirunes.com">← Inicio</a>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1041,6 +1043,14 @@ function setFechaFilter(f,el){
   renderAdmin();
 }
 
+// Show home button if coming from terminal
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  const ref=document.referrer;
+  if(params.get('modo')==='quiosco'||ref.includes('inicio.ccirunes.com')||ref.includes('ccirunes.com/inicio')){
+    document.getElementById('btn-inicio').style.display='block';
+  }
+})();
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
