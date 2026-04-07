@@ -758,8 +758,8 @@ function renderAdmin(){
     : notas;
   const filt=adminFilter==='todos'?base:base.filter(n=>n.forma_pago===adminFilter);
   const totalSum=filt.reduce((a,n)=>a+n.total,0);
-  const efectivoSum=base.filter(n=>n.forma_pago==='efectivo').reduce((a,n)=>a+n.total,0);
-  const tarjetaSum=base.filter(n=>n.forma_pago==='tarjeta').reduce((a,n)=>a+n.total,0);
+  const efectivoSum=filt.filter(n=>n.forma_pago==='efectivo').reduce((a,n)=>a+n.total,0);
+  const tarjetaSum=filt.filter(n=>n.forma_pago==='tarjeta').reduce((a,n)=>a+n.total,0);
   document.getElementById('admin-stats').innerHTML=
     '<div class="stat-card"><div class="stat-num">'+filt.length+'</div><div class="stat-label">Notas</div></div>'+
     '<div class="stat-card"><div class="stat-num">'+fmt2(efectivoSum)+'€</div><div class="stat-label">Efectivo</div></div>'+
