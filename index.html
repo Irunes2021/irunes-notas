@@ -359,64 +359,20 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let SOCIOS={};
 
-// ── CARTA ────────────────────────────────────────────────────
-const CARTA=[
-  {cat:'Vinos',icon:'🍷',items:[
-    {nombre:'Ardo Beltza · Tinto',precio:3.50},
-    {nombre:'Ardo Gorria · Rosado',precio:3.50},
-    {nombre:'Rueda Bitacora',precio:4.50},
-    {nombre:'Crianza Glorioso Kriantza',precio:9.50},
-    {nombre:'Cuarto Kriantza',precio:5.50},
-    {nombre:'Txakoli',precio:8.00},
-    {nombre:'Moskato',precio:5.00},
-    {nombre:'Sagardoa · Sidra',precio:3.50},
-    {nombre:'Cava',precio:10.00},
-    {nombre:'Descorche (botellas refresco)',precio:2.50},
-  ]},
-  {cat:'Refrescos y Cervezas',icon:'🍺',items:[
-    {nombre:'San Miguel / Estrella Galicia',precio:1.30},
-    {nombre:'Cerveza Daura',precio:1.80},
-    {nombre:'Cerveza Voll-Damm',precio:1.50},
-    {nombre:'0,0 Garagardoa · Cerveza sin',precio:1.30},
-    {nombre:'Cerveza Radler',precio:1.20},
-    {nombre:'Alhambra Berde',precio:2.00},
-    {nombre:'Alhambra Gorria',precio:2.00},
-    {nombre:'Coca-Cola',precio:1.20},
-    {nombre:'Kas naranja edo limón',precio:1.00},
-    {nombre:'Tónica Schweppes',precio:1.50},
-    {nombre:'Aquarius',precio:1.50},
-    {nombre:'Ura · Agua',precio:0.60},
-  ]},
-  {cat:'Cafés',icon:'☕',items:[
-    {nombre:'Kafea · Café',precio:1.20},
-    {nombre:'Kafeinagabeko Kafea · Descafeinado',precio:1.20},
-    {nombre:'Cola Cao',precio:1.00},
-    {nombre:'Esne Edalontzia · Vaso de leche',precio:1.00},
-    {nombre:'Infusioak · Infusiones',precio:1.00},
-  ]},
-  {cat:'Licores',icon:'🥃',items:[
-    {nombre:'Patxarana',precio:2.50},
-    {nombre:'Uxual Krema · Crema de Orujo',precio:2.20},
-    {nombre:'Ginebra Beefeater',precio:2.20},
-    {nombre:'Ron Habana/Barcelo',precio:2.20},
-    {nombre:'Vodka Smirnoff / Absolut',precio:2.50},
-    {nombre:'Cointreau',precio:3.00},
-    {nombre:'Torres 10',precio:2.20},
-    {nombre:'Armagnac',precio:3.70},
-    {nombre:'Whisky J.B.',precio:2.60},
-    {nombre:'Belar Likorea · Licor de hierbas/Orujo',precio:2.20},
-    {nombre:'Jagermeister',precio:2.50},
-  ]},
-  {cat:'Cocina',icon:'🍳',items:[
-    {nombre:'Eguzkilore Olioa · Aceite de girasol',precio:2.00},
-    {nombre:'Ongailuak · Aderezos',precio:0.50},
-    {nombre:'Tuper',precio:0.25},
-    {nombre:'Gasa (15 minutu)',precio:1.80},
-    {nombre:'Bazkaria · Comida (por comensal)',precio:3.00},
-    {nombre:'Afaria · Cena (por comensal)',precio:3.00},
-    {nombre:'Merienda (por comensal)',precio:2.50},
-  ]},
-];
+// ── CARTA (cargada desde Supabase) ───────────────────────────
+let CARTA=[];
+const CAT_ICONS={'Vinos':'🍷','Refrescos y Cervezas':'🍺','Cafés':'☕','Licores':'🥃','Cocina':'🍳'};
+
+async function loadCarta(){
+  const {data,error}=await sb.from('carta').select('*').eq('activo',true).order('categoria').order('orden');
+  if(error){console.error(error);return;}
+  const cats={};
+  (data||[]).forEach(function(row){
+    if(!cats[row.categoria]) cats[row.categoria]={cat:row.categoria,icon:row.icono||CAT_ICONS[row.categoria]||'🍽️',items:[]};
+    cats[row.categoria].items.push({id:row.id,nombre:row.nombre,precio:parseFloat(row.precio),orden:row.orden});
+  });
+  CARTA=Object.values(cats);
+}
 
 // ── ESTADO ───────────────────────────────────────────────────
 let cu=null, cantidades={}, propinaAmt=0, formaPago='efectivo', notas=[], adminFilter='todos', numComensales=1, turnoActual='comida';
@@ -427,9 +383,8 @@ function fmt2(n){return n.toFixed(2).replace('.',',');}
 
 function calcTotal(){
   let total=0;
-  CARTA.forEach(cat=>cat.items.forEach((item,i)=>{
-    const key=cat.cat+'_'+i;
-    total+=(cantidades[key]||0)*item.precio;
+  CARTA.forEach(cat=>cat.items.forEach(function(item){
+    total+=(cantidades[item.id]||0)*item.precio;
   }));
   return total;
 }
@@ -511,9 +466,9 @@ async function saveNota(nota){
 
 // ── CARTA ────────────────────────────────────────────────────
 function renderCarta(){
-  const html=CARTA.map(cat=>{
-    const items=cat.items.map((item,i)=>{
-      const key=cat.cat+'_'+i;
+  const html=CARTA.map(function(cat){
+    const items=cat.items.map(function(item){
+      const key=item.id;
       const qty=cantidades[key]||0;
       return '<div class="producto-row'+(qty>0?' selected':'')+'" id="row_'+key+'">'+
         '<span class="producto-name">'+item.nombre+'</span>'+
@@ -592,28 +547,20 @@ function updateCocinaPrice(){
     cena:'Cena (por comensal)'
   };
   // Clear all 3 turno cocina items first
-  ['comida','merienda','cena'].forEach(t=>{
+  ['comida','merienda','cena'].forEach(function(t){
     const nombre=turnoMap[t];
-    const cat=CARTA.find(c=>c.cat==='Cocina');
+    const cat=CARTA.find(function(c){return c.cat==='Cocina';});
     if(!cat)return;
-    const idx=cat.items.findIndex(item=>item.nombre===nombre);
-    if(idx===-1)return;
-    const key='Cocina_'+idx;
-    const prevQty=cantidades[key]||0;
-    // Only reset if it was auto-filled (not manually changed to something else)
-    if(t!==turnoActual){
-      cantidades[key]=0;
-    }
+    const item=cat.items.find(function(it){return it.nombre===nombre;});
+    if(!item)return;
+    if(t!==turnoActual) cantidades[item.id]=0;
   });
   // Set current turno item to numComensales
   const nombre=turnoMap[turnoActual];
   const cat=CARTA.find(c=>c.cat==='Cocina');
   if(cat){
-    const idx=cat.items.findIndex(item=>item.nombre===nombre);
-    if(idx!==-1){
-      const key='Cocina_'+idx;
-      cantidades[key]=numComensales;
-    }
+    const item=cat.items.find(function(it){return it.nombre===nombre;});
+    if(item) cantidades[item.id]=numComensales;
   }
   // Re-render carta to reflect changes
   renderCarta();
@@ -632,15 +579,14 @@ function renderTicket(){
   document.getElementById('ticket-turno').textContent={comida:'🍽️ Comida',merienda:'☕ Merienda',cena:'🌙 Cena'}[turnoActual]+' · '+numComensales+' comensal'+(numComensales>1?'es':'');
   let lineas='';
   let subtotal=0;
-  CARTA.forEach(cat=>cat.items.forEach((item,i)=>{
-    const key=cat.cat+'_'+i;
-    const qty=cantidades[key]||0;
+  CARTA.forEach(function(cat){cat.items.forEach(function(item){
+    const qty=cantidades[item.id]||0;
     if(qty>0){
       const importe=qty*item.precio;
       subtotal+=importe;
       lineas+='<div class="ticket-line"><span>'+qty+'x '+item.nombre+'</span><span>'+fmt2(importe)+'€</span></div>';
     }
-  }));
+  });});
   document.getElementById('ticket-lineas').innerHTML=lineas;
   document.getElementById('ticket-subtotal').textContent=fmt2(subtotal)+'€';
   const total=subtotal+propinaAmt;
@@ -655,11 +601,10 @@ async function confirmarPago(){
   const total=subtotal+propAmt;
   // Build lineas array
   const lineas=[];
-  CARTA.forEach(cat=>cat.items.forEach((item,i)=>{
-    const key=cat.cat+'_'+i;
-    const qty=cantidades[key]||0;
-    if(qty>0) lineas.push({nombre:item.nombre,qty,precio:item.precio,subtotal:qty*item.precio});
-  }));
+  CARTA.forEach(function(cat){cat.items.forEach(function(item){
+    const qty=cantidades[item.id]||0;
+    if(qty>0) lineas.push({nombre:item.nombre,qty:qty,precio:item.precio,subtotal:qty*item.precio});
+  });});
   const nota={
     socio_num:cu,
     subtotal:Math.round(subtotal*100)/100,
@@ -808,7 +753,7 @@ function switchTab(tab){
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['carta','historial','admin'][i]===tab));
   if(tab==='historial')renderHistorial();
   if(tab==='admin'){
-    loadNotas().then(()=>{renderAdmin();renderCartaAdmin();});
+    loadNotas().then(function(){renderAdmin();renderCartaAdmin();});
   }
 }
 
@@ -819,15 +764,15 @@ function renderCartaAdmin(){
   const list=document.getElementById('carta-admin-list');
   if(!list)return;
   let html='';
-  CARTA.forEach(function(cat,ci){
+  CARTA.forEach(function(cat){
     html+='<div style="margin-bottom:.75rem;">'+
       '<div style="font-size:.9rem;font-weight:600;color:var(--gold);padding:.4rem .75rem;background:var(--dark);border-radius:8px;margin-bottom:.4rem;">'+cat.icon+' '+cat.cat+'</div>';
-    cat.items.forEach(function(item,ii){
+    cat.items.forEach(function(item){
       html+='<div style="display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.55rem .85rem;margin-bottom:.3rem;gap:.5rem;">'+
         '<span style="flex:1;font-size:.85rem;">'+item.nombre+'</span>'+
         '<span style="font-size:.85rem;font-weight:600;min-width:3rem;text-align:right;">'+fmt2(item.precio)+'€</span>'+
-        '<button onclick="openEditProducto('+ci+','+ii+')" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--brown);margin-left:.4rem;">Editar</button>'+
-        '<button onclick="deleteProducto('+ci+','+ii+')" style="background:none;border:1px solid rgba(139,32,32,.3);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--red);">✕</button>'+
+        '<button data-id="'+item.id+'" onclick="openEditProducto(this.dataset.id)" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--brown);margin-left:.4rem;">Editar</button>'+
+        '<button data-id="'+item.id+'" data-nombre="'+item.nombre.replace(/"/g,'&quot;')+'" onclick="deleteProducto(this.dataset.id,this.dataset.nombre)" style="background:none;border:1px solid rgba(139,32,32,.3);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--red);">✕</button>'+
       '</div>';
     });
     html+='</div>';
@@ -838,19 +783,23 @@ function renderCartaAdmin(){
 function openAddProducto(){
   editingProducto=null;
   document.getElementById('producto-modal-title').textContent='Nuevo producto';
+  document.getElementById('pm-cat').value='Vinos';
   document.getElementById('pm-nombre').value='';
   document.getElementById('pm-precio').value='';
   document.getElementById('pm-error').style.display='none';
   document.getElementById('producto-modal').classList.add('show');
 }
 
-function openEditProducto(ci,ii){
-  editingProducto={ci,ii};
-  const item=CARTA[ci].items[ii];
+function openEditProducto(id){
+  id=parseInt(id);
+  let found=null;
+  CARTA.forEach(function(cat){cat.items.forEach(function(item){if(item.id===id)found={cat:cat.cat,item:item};});});
+  if(!found)return;
+  editingProducto=id;
   document.getElementById('producto-modal-title').textContent='Editar producto';
-  document.getElementById('pm-cat').value=CARTA[ci].cat;
-  document.getElementById('pm-nombre').value=item.nombre;
-  document.getElementById('pm-precio').value=item.precio;
+  document.getElementById('pm-cat').value=found.cat;
+  document.getElementById('pm-nombre').value=found.item.nombre;
+  document.getElementById('pm-precio').value=found.item.precio;
   document.getElementById('pm-error').style.display='none';
   document.getElementById('producto-modal').classList.add('show');
 }
@@ -860,30 +809,38 @@ function closeProductoModal(){
   editingProducto=null;
 }
 
-function saveProducto(){
+async function saveProducto(){
   const catNombre=document.getElementById('pm-cat').value;
   const nombre=document.getElementById('pm-nombre').value.trim();
   const precio=parseFloat(document.getElementById('pm-precio').value);
   const err=document.getElementById('pm-error');
   if(!nombre){err.textContent='El nombre es obligatorio.';err.style.display='block';return;}
   if(isNaN(precio)||precio<0){err.textContent='Introduce un precio válido.';err.style.display='block';return;}
-  const cat=CARTA.find(c=>c.cat===catNombre);
-  if(!cat)return;
+  const icon=CAT_ICONS[catNombre]||'🍽️';
   if(editingProducto!==null){
-    CARTA[editingProducto.ci].items[editingProducto.ii]={nombre,precio};
+    // Update existing
+    const {error}=await sb.from('carta').update({categoria:catNombre,icono:icon,nombre:nombre,precio:precio}).eq('id',editingProducto);
+    if(error){err.textContent='Error al guardar. Intenta de nuevo.';err.style.display='block';return;}
+    showToast('✓ Producto actualizado');
   } else {
-    cat.items.push({nombre,precio});
+    // Get max orden for this cat
+    const cat=CARTA.find(function(c){return c.cat===catNombre;});
+    const maxOrden=cat?Math.max(0,...cat.items.map(function(i){return i.orden;})):0;
+    const {error}=await sb.from('carta').insert([{categoria:catNombre,icono:icon,nombre:nombre,precio:precio,orden:maxOrden+1,activo:true}]);
+    if(error){err.textContent='Error al guardar. Intenta de nuevo.';err.style.display='block';return;}
+    showToast('✓ Producto añadido');
   }
   closeProductoModal();
+  await loadCarta();
   renderCartaAdmin();
   renderCarta();
-  showToast(editingProducto?'✓ Producto actualizado':'✓ Producto añadido');
 }
 
-function deleteProducto(ci,ii){
-  const item=CARTA[ci].items[ii];
-  if(!confirm('¿Eliminar "'+item.nombre+'"?'))return;
-  CARTA[ci].items.splice(ii,1);
+async function deleteProducto(id,nombre){
+  if(!confirm('¿Eliminar "'+nombre+'"?'))return;
+  const {error}=await sb.from('carta').update({activo:false}).eq('id',parseInt(id));
+  if(error){showToast('Error al eliminar');return;}
+  await loadCarta();
   renderCartaAdmin();
   renderCarta();
   showToast('Producto eliminado');
@@ -906,9 +863,9 @@ function setFechaFilter(f,el){
   renderAdmin();
 }
 
-// Arranque: cargar socios al inicio
+// Arranque: cargar socios y carta
 (async function(){
-  await loadSocios();
+  await Promise.all([loadSocios(), loadCarta()]);
 })();
 
 // Show home button if coming from terminal
