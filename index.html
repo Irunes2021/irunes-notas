@@ -362,9 +362,10 @@ let SOCIOS={};
 // ── CARTA (cargada desde Supabase) ───────────────────────────
 let CARTA=[];
 const CAT_ICONS={'Vinos':'🍷','Refrescos y Cervezas':'🍺','Cafés':'☕','Licores':'🥃','Cocina':'🍳'};
+const CAT_ORDEN={'Vinos':1,'Refrescos y Cervezas':2,'Cafés':3,'Licores':4,'Cocina':5};
 
 async function loadCarta(){
-  const {data,error}=await sb.from('carta').select('*').eq('activo',true).order('categoria').order('orden');
+  const {data,error}=await sb.from('carta').select('*').eq('activo',true).order('cat_orden').order('orden');
   if(error){console.error(error);return;}
   const cats={};
   (data||[]).forEach(function(row){
@@ -826,7 +827,7 @@ async function saveProducto(){
     // Get max orden for this cat
     const cat=CARTA.find(function(c){return c.cat===catNombre;});
     const maxOrden=cat?Math.max(0,...cat.items.map(function(i){return i.orden;})):0;
-    const {error}=await sb.from('carta').insert([{categoria:catNombre,icono:icon,nombre:nombre,precio:precio,orden:maxOrden+1,activo:true}]);
+    const {error}=await sb.from('carta').insert([{categoria:catNombre,icono:icon,nombre:nombre,precio:precio,orden:maxOrden+1,cat_orden:CAT_ORDEN[catNombre]||99,activo:true}]);
     if(error){err.textContent='Error al guardar. Intenta de nuevo.';err.style.display='block';return;}
     showToast('✓ Producto añadido');
   }
