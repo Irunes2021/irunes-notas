@@ -6,6 +6,7 @@
 <title>Notas de Gasto · CC Irunes</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qz-tray@2.2.4/qz-tray.min.js"></script>
 <style>
   :root {
     --cream:#F5F0E8; --dark:#1A1208; --brown:#6B4226;
@@ -619,25 +620,8 @@ async function confirmarPago(){
   const saved=await saveNota(nota);
   if(!saved)return;
   notas.unshift(saved);
-  // Print ticket only once
-  const printArea = document.getElementById('print-area').innerHTML;
-  const printWin = window.open('','_blank','width=400,height=600');
-  printWin.document.write(`<!DOCTYPE html>
-<html><head><meta charset="UTF-8">
-<style>
-  body{font-family:'DM Sans',sans-serif;font-size:13px;width:80mm;margin:0;padding:10px;}
-  h4{font-size:14px;margin:0 0 2px;}
-  p{margin:2px 0;font-size:11px;color:#666;}
-  .ticket-line{display:flex;justify-content:space-between;padding:2px 0;}
-  .ticket-line.subtotal{border-top:1px dashed #ccc;margin-top:4px;padding-top:4px;font-weight:600;}
-  .ticket-line.propina{color:#999;}
-  .ticket-line.total{border-top:2px solid #000;margin-top:4px;padding-top:4px;font-size:15px;font-weight:700;}
-  .ticket-header{text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ccc;}
-</style></head>
-<body>${printArea}</body></html>`);
-  printWin.document.close();
-  printWin.focus();
-  setTimeout(()=>{printWin.print();printWin.close();},300);
+  // Imprimir ticket por impresora térmica
+  await imprimirTicketESCPOS(saved);
   // Reset
   closePago();
   cantidades={};
@@ -677,6 +661,7 @@ function renderHistorial(){
         detalleHtml+
         (n.propina>0?'<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.3rem 0;color:var(--text-muted);"><span>Propina</span><span>'+fmt2(n.propina)+'€</span></div>':'')+
         '<div style="display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;padding:.4rem 0;border-top:2px solid var(--dark);margin-top:.2rem;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
+        '<button data-idx="'+idx+'" onclick="reimprimirNota(this.dataset.idx)" style="width:100%;margin-top:.6rem;padding:.5rem;background:none;border:1px solid var(--border);border-radius:9px;font-family:\'DM Sans\',sans-serif;font-size:.78rem;cursor:pointer;color:var(--brown);">🖨️ Reimprimir ticket</button>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -877,6 +862,94 @@ function setFechaFilter(f,el){
     document.getElementById('btn-inicio').style.display='block';
   }
 })();
+// ── IMPRESIÓN TÉRMICA QZ TRAY ────────────────────────────────
+const PRINTER_IP  = '192.168.1.100'; // iggual TP-8002 (IP fija, selftest)
+const PAPER_COLS  = 48;              // 80mm paper, fuente normal (48 col)
+const CLUB_HEADER = 'Sociedad Gastronómica CC Irunes';
+const CLUB_DIR    = 'ccirunes.com';
+
+function tPad(str,len,right){str=String(str).substring(0,len);while(str.length<len)str=right?str+' ':' '+str;return str;}
+function tCenter(str,w){str=String(str).substring(0,w);return ' '.repeat(Math.floor((w-str.length)/2))+str;}
+function tLine(w){return '-'.repeat(w);}
+
+function buildESCPOS(n){
+  const d=new Date(n.created_at||Date.now());
+  const fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const lineas=JSON.parse(n.lineas||'[]');
+  const W=PAPER_COLS;
+  const rows=[
+    tCenter(CLUB_HEADER,W),
+    tCenter(CLUB_DIR,W),
+    tLine(W),
+    tPad('Socio:',8)+tPad('Nº '+parseInt(n.socio_num)+' · '+sN(n.socio_num),W-8,true),
+    tPad('Fecha:',8)+tPad(fecha,W-8,true),
+    tPad('Turno:',8)+tPad({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-',W-8,true),
+    tPad('Pers.:',8)+tPad(String(n.comensales||1),W-8,true),
+    tLine(W),
+    ...lineas.map(function(l){
+      const pr=fmt2(l.subtotal)+'EUR';
+      const desc=(l.qty+'x '+l.nombre).substring(0,W-pr.length-1);
+      return tPad(desc,W-pr.length-1,true)+' '+pr;
+    }),
+    tLine(W),
+  ];
+  if(n.propina>0){
+    const pr='Propina: '+fmt2(n.propina)+'EUR';
+    rows.push(tCenter(pr,W));
+  }
+  const tot='TOTAL: '+fmt2(n.total)+' EUR';
+  rows.push(tCenter(tot,W));
+  rows.push(tLine(W));
+  rows.push(tCenter('Gracias por su visita',W));
+  rows.push('\n\n\n');
+  return rows.join('\n');
+}
+
+async function imprimirTicketESCPOS(n){
+  if(typeof qz==='undefined'||!qz.websocket){
+    // Fallback: impresión por navegador si QZ Tray no está disponible
+    _fallbackPrint(n);
+    return;
+  }
+  try{
+    if(!qz.websocket.isActive()) await qz.websocket.connect();
+    const config=qz.configs.create({host:PRINTER_IP,port:9100});
+    await qz.print(config,[{type:'raw',format:'plain',data:buildESCPOS(n)}]);
+    showToast('✓ Ticket impreso');
+  }catch(err){
+    console.warn('QZ Tray error:',err);
+    _fallbackPrint(n);
+  }
+}
+
+function _fallbackPrint(n){
+  const lineas=JSON.parse(n.lineas||'[]');
+  const d=new Date(n.created_at||Date.now());
+  const fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  let html='<div style="text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ccc;">'+
+    '<h4 style="font-size:13px;margin:0 0 2px;">'+CLUB_HEADER+'</h4>'+
+    '<p style="font-size:10px;color:#666;">'+CLUB_DIR+'</p></div>'+
+    '<p style="font-size:11px;margin:2px 0;">Socio: Nº '+parseInt(n.socio_num)+' · '+sN(n.socio_num)+'</p>'+
+    '<p style="font-size:11px;margin:2px 0;">Fecha: '+fecha+'</p>'+
+    '<p style="font-size:11px;margin:2px 0 6px;">Turno: '+({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-')+' · '+n.comensales+' pers.</p>'+
+    '<div style="border-top:1px dashed #ccc;padding-top:6px;">';
+  lineas.forEach(function(l){html+='<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0;"><span>'+l.qty+'x '+l.nombre+'</span><span>'+fmt2(l.subtotal)+'€</span></div>';});
+  html+='</div>'+
+    '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:2px solid #000;margin-top:6px;padding-top:4px;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
+    '<p style="text-align:center;font-size:10px;color:#666;margin-top:8px;">Gracias por su visita</p>';
+  const w=window.open('','_blank','width=320,height=500');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:monospace;font-size:12px;width:72mm;margin:0;padding:8px;}</style></head><body>'+html+'</body></html>');
+  w.document.close();
+  w.focus();
+  setTimeout(function(){w.print();w.close();},300);
+}
+
+function reimprimirNota(idx){
+  const mias=notas.filter(function(n){return n.socio_num===cu;});
+  const n=mias[parseInt(idx)];
+  if(n) imprimirTicketESCPOS(n);
+}
+
 function showToast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
