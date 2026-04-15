@@ -863,10 +863,11 @@ function setFechaFilter(f,el){
   }
 })();
 // ── IMPRESIÓN TÉRMICA QZ TRAY ────────────────────────────────
-const PRINTER_IP  = '192.168.1.100'; // iggual TP-8002 (IP fija, selftest)
-const PAPER_COLS  = 48;              // 80mm paper, fuente normal (48 col)
-const CLUB_HEADER = 'Sociedad Gastronómica CC Irunes';
-const CLUB_DIR    = 'ccirunes.com';
+const PRINTER_NAME = 'EML-POS80C';  // Nombre en macOS/Windows (USB)
+const PRINTER_IP   = null;          // Sin uso en modo USB
+const PAPER_COLS   = 48;            // 80mm paper, fuente normal (48 col)
+const CLUB_HEADER  = 'Sociedad Gastronómica CC Irunes';
+const CLUB_DIR     = 'ccirunes.com';
 
 function tPad(str,len,right){str=String(str).substring(0,len);while(str.length<len)str=right?str+' ':' '+str;return str;}
 function tCenter(str,w){str=String(str).substring(0,w);return ' '.repeat(Math.floor((w-str.length)/2))+str;}
@@ -907,13 +908,17 @@ function buildESCPOS(n){
 
 async function imprimirTicketESCPOS(n){
   if(typeof qz==='undefined'||!qz.websocket){
-    // Fallback: impresión por navegador si QZ Tray no está disponible
     _fallbackPrint(n);
     return;
   }
   try{
-    if(!qz.websocket.isActive()) await qz.websocket.connect();
-    const config=qz.configs.create({host:PRINTER_IP,port:9100});
+    if(!qz.websocket.isActive()){
+      qz.security.setCertificatePromise(function(resolve){resolve('');});
+      qz.security.setSignatureAlgorithm('SHA512');
+      qz.security.setSignaturePromise(function(toSign){return function(resolve){resolve('');};});
+      await qz.websocket.connect({secure:false});
+    }
+    const config=qz.configs.create(PRINTER_NAME);
     await qz.print(config,[{type:'raw',format:'plain',data:buildESCPOS(n)}]);
     showToast('✓ Ticket impreso');
   }catch(err){
