@@ -869,7 +869,7 @@ const PAPER_COLS   = 24;            // 80mm paper, fuente normal (48 col)
 const CLUB_HEADER  = 'CC Irunes';
 const CLUB_DIR     = 'ccirunes.com';
 
-function ascii(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^ -]/g,'');}
+function ascii(s){var r={'á':'a','é':'e','í':'i','ó':'o','ú':'u','ü':'u','ñ':'n','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','Ü':'U','Ñ':'N'};return String(s).split('').map(function(c){return r[c]||(/[\x00-\x7F]/.test(c)?c:'');}).join('');}
 function tPad(str,len,right){str=String(str).substring(0,len);while(str.length<len)str=right?str+' ':' '+str;return str;}
 function tCenter(str,w){str=String(str).substring(0,w);return ' '.repeat(Math.floor((w-str.length)/2))+str;}
 function tLine(w){return '-'.repeat(w);}
@@ -881,7 +881,7 @@ function toCP858bytes(str){
     var c=str[i];
     if(c==='€'){out.push(0xD5);}
     else if(c.charCodeAt(0)<128){out.push(c.charCodeAt(0));}
-    else{var norm=c.normalize('NFD').replace(/[̀-ͯ]/g,'');out.push(norm.charCodeAt(0)<128?norm.charCodeAt(0):63);}
+    else{var norm=c.normalize('NFD').replace(/[\u0300-\u036f]/g,'');out.push(norm.charCodeAt(0)<128?norm.charCodeAt(0):63);}
   }
   return out;
 }
