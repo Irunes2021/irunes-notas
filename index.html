@@ -865,7 +865,7 @@ function setFechaFilter(f,el){
 // ── IMPRESIÓN TÉRMICA QZ TRAY ────────────────────────────────
 const PRINTER_NAME = 'EML POS-80C';  // Nombre en macOS/Windows (USB)
 const PRINTER_IP   = null;          // Sin uso en modo USB
-const PAPER_COLS   = 21;            // 80mm paper, fuente normal (48 col)
+const PAPER_COLS   = 42;            // 80mm paper, fuente normal (48 col)
 const CLUB_HEADER  = 'CC Irunes';
 const CLUB_DIR     = 'ccirunes.com';
 
@@ -915,22 +915,12 @@ function buildESCPOS(n){
   rows.push('Gracias por su visita');
   const text=rows.join('\n');
 
-  // ESC @ = reset
-  // GS ! 0x10 = doble anchura (width x2, height x1)
-  // ESC d 10 = avanzar 10 lineas
-  // GS V 1 = corte parcial
-  var init    = [0x1B,0x40];        // ESC @ reset
-  var dblW    = [0x1D,0x21,0x10];   // GS ! 0x10 doble anchura
-  var feed    = [0x1B,0x64,0x0A];   // ESC d 10
-  var cut     = [0x1D,0x56,0x01];   // GS V 1
+  // Solo reset + avance + corte, sin cambiar fuente
+  var init = [0x1B,0x40];      // ESC @ reset (fuente por defecto)
+  var feed = [0x1B,0x64,0x0A]; // ESC d 10 avanzar 10 lineas
+  var cut  = [0x1D,0x56,0x01]; // GS V 1 corte parcial
 
-  var allBytes=[]
-    .concat(init)
-    .concat(dblW)
-    .concat(textToBytes(text))
-    .concat(feed)
-    .concat(cut);
-
+  var allBytes=[].concat(init).concat(textToBytes(text)).concat(feed).concat(cut);
   return [{type:'raw',format:'base64',data:toBase64(allBytes)}];
 }
 
