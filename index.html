@@ -901,7 +901,7 @@ function buildESCPOS(n){
     fecha,
     'Turno: '+({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-'),
     'Pers: '+String(n.comensales||1),
-    'Pago: '+({efectivo:'Efectivo',tarjeta:'Tarjeta'}[n.pago]||'-'),
+    'Pago: '+({efectivo:'Efectivo',tarjeta:'Tarjeta'}[n.forma_pago]||'-'),
     tLine(W),
     ...lineas.map(function(l){
       const pr=fmt2(l.subtotal)+' EUR';
