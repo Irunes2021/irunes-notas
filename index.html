@@ -865,7 +865,7 @@ function setFechaFilter(f,el){
 // ── IMPRESIÓN TÉRMICA QZ TRAY ────────────────────────────────
 const PRINTER_NAME = 'EML POS-80C';  // Nombre en macOS/Windows (USB)
 const PRINTER_IP   = null;          // Sin uso en modo USB
-const PAPER_COLS   = 32;            // 80mm paper, fuente normal (48 col)
+const PAPER_COLS   = 42;            // 80mm paper, fuente normal (48 col)
 const CLUB_HEADER  = 'CC Irunes';
 const CLUB_DIR     = 'ccirunes.com';
 
@@ -883,7 +883,7 @@ function textToBytes(str){
   var out=[];
   for(var i=0;i<str.length;i++){
     var code=str.charCodeAt(i);
-    out.push(code<128?code:63); // no-ASCII -> '?'
+    out.push(code<128?code:63);
   }
   return out;
 }
@@ -915,20 +915,19 @@ function buildESCPOS(n){
   rows.push('Gracias por su visita');
   const text=rows.join('\n');
 
-  // Comandos ESC/POS:
-  // ESC @ = inicializar impresora (resetea fuente a normal)
-  // ESC ! 0x00 = fuente normal (no condensada)
-  // [texto]
-  // ESC d 6 = avanzar 6 lineas
-  // GS V 1 = corte parcial del papel
-  var init=[0x1B,0x40];           // ESC @ reset
-  var fontNormal=[0x1B,0x21,0x00]; // ESC ! 0 fuente normal
-  var feed=[0x1B,0x64,0x06];      // ESC d 6 avanzar 6 lineas
-  var cut=[0x1D,0x56,0x01];       // GS V 1 corte parcial
+  // ESC @ = reset impresora
+  // ESC ! 0x01 = fuente B (mas grande/ancha en muchas POS)
+  // GS ! 0x00 = escala normal (sin doble altura/anchura)
+  // ESC d 10 = avanzar 10 lineas al final
+  // GS V 1 = corte parcial
+  var init=[0x1B,0x40];             // ESC @ reset
+  var fontB=[0x1B,0x21,0x01];       // ESC ! 1 = fuente B (mas ancha)
+  var feed=[0x1B,0x64,0x0A];        // ESC d 10 avanzar 10 lineas
+  var cut=[0x1D,0x56,0x01];         // GS V 1 corte parcial
 
   var allBytes=[]
     .concat(init)
-    .concat(fontNormal)
+    .concat(fontB)
     .concat(textToBytes(text))
     .concat(feed)
     .concat(cut);
