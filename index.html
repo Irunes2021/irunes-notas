@@ -865,14 +865,11 @@ function setFechaFilter(f,el){
 // ── IMPRESIÓN TÉRMICA QZ TRAY ────────────────────────────────
 const PRINTER_NAME = 'EML POS-80C';  // Nombre en macOS/Windows (USB)
 const PRINTER_IP   = null;          // Sin uso en modo USB
-const PAPER_COLS   = 32;            // 80mm paper, fuente normal (48 col)
-const CLUB_HEADER  = 'Sociedad Gastronomica CC Irunes';
+const PAPER_COLS   = 24;            // 80mm paper, fuente normal (48 col)
+const CLUB_HEADER  = 'CC Irunes';
 const CLUB_DIR     = 'ccirunes.com';
 
-function ascii(str){
-  return String(str).normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[^\x00-\x7F]/g,'?');
-}
+function ascii(s){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x00-\x7F]/g,'');}
 function tPad(str,len,right){str=String(str).substring(0,len);while(str.length<len)str=right?str+' ':' '+str;return str;}
 function tCenter(str,w){str=String(str).substring(0,w);return ' '.repeat(Math.floor((w-str.length)/2))+str;}
 function tLine(w){return '-'.repeat(w);}
@@ -886,26 +883,22 @@ function buildESCPOS(n){
     tCenter(ascii(CLUB_HEADER),W),
     tCenter(ascii(CLUB_DIR),W),
     tLine(W),
-    tPad('Socio:',8)+tPad('N '+parseInt(n.socio_num)+' '+ascii(sN(n.socio_num)),W-8,true),
-    tPad('Fecha:',8)+tPad(fecha,W-8,true),
-    tPad('Turno:',8)+tPad({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-',W-8,true),
-    tPad('Pers.:',8)+tPad(String(n.comensales||1),W-8,true),
+    'N '+parseInt(n.socio_num)+' '+ascii(sN(n.socio_num)),
+    fecha,
+    'Turno: '+({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-'),
+    'Pers: '+String(n.comensales||1),
     tLine(W),
     ...lineas.map(function(l){
-      const pr=fmt2(l.subtotal)+'EUR';
-      const desc=(l.qty+'x '+ascii(l.nombre)).substring(0,W-pr.length-1);
-      return tPad(desc,W-pr.length-1,true)+' '+pr;
+      const pr=fmt2(l.subtotal)+'e';
+      const np=ascii(l.nombre).substring(0,W-pr.length-2);
+      return l.qty+'x '+tPad(np,W-pr.length-2,true)+' '+pr;
     }),
     tLine(W),
   ];
-  if(n.propina>0){
-    const pr='Propina: '+fmt2(n.propina)+'EUR';
-    rows.push(tCenter(pr,W));
-  }
-  const tot='TOTAL: '+fmt2(n.total)+' EUR';
-  rows.push(tCenter(tot,W));
+  if(n.propina>0) rows.push('Propina: '+fmt2(n.propina)+'e');
+  rows.push('TOTAL: '+fmt2(n.total)+'e');
   rows.push(tLine(W));
-  rows.push(tCenter('Gracias por su visita',W));
+  rows.push('Gracias por su visita');
   rows.push('\n\n\n');
   return rows.join('\n');
 }
