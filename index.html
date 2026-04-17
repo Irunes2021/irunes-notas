@@ -869,10 +869,22 @@ const PAPER_COLS   = 24;            // 80mm paper, fuente normal (48 col)
 const CLUB_HEADER  = 'CC Irunes';
 const CLUB_DIR     = 'ccirunes.com';
 
-function ascii(s){return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x00-\x7F]/g,'');}
+function ascii(s){return String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^ -]/g,'');}
 function tPad(str,len,right){str=String(str).substring(0,len);while(str.length<len)str=right?str+' ':' '+str;return str;}
 function tCenter(str,w){str=String(str).substring(0,w);return ' '.repeat(Math.floor((w-str.length)/2))+str;}
 function tLine(w){return '-'.repeat(w);}
+
+// En CP858 el simbolo euro es el byte 0xD5
+function toCP858bytes(str){
+  var out=[];
+  for(var i=0;i<str.length;i++){
+    var c=str[i];
+    if(c==='€'){out.push(0xD5);}
+    else if(c.charCodeAt(0)<128){out.push(c.charCodeAt(0));}
+    else{var norm=c.normalize('NFD').replace(/[̀-ͯ]/g,'');out.push(norm.charCodeAt(0)<128?norm.charCodeAt(0):63);}
+  }
+  return out;
+}
 
 function buildESCPOS(n){
   const d=new Date(n.created_at||Date.now());
@@ -889,18 +901,21 @@ function buildESCPOS(n){
     'Pers: '+String(n.comensales||1),
     tLine(W),
     ...lineas.map(function(l){
-      const pr=fmt2(l.subtotal)+'e';
+      const pr=fmt2(l.subtotal)+'€';
       const np=ascii(l.nombre).substring(0,W-pr.length-2);
       return l.qty+'x '+tPad(np,W-pr.length-2,true)+' '+pr;
     }),
     tLine(W),
   ];
-  if(n.propina>0) rows.push('Propina: '+fmt2(n.propina)+'e');
-  rows.push('TOTAL: '+fmt2(n.total)+'e');
+  if(n.propina>0) rows.push('Propina: '+fmt2(n.propina)+'€');
+  rows.push('TOTAL: '+fmt2(n.total)+' €');
   rows.push(tLine(W));
   rows.push('Gracias por su visita');
-  rows.push('\n\n\n');
-  return rows.join('\n');
+  rows.push('\n\n\n\n\n\n');
+  const text=rows.join('\n');
+  const cmdCP858=[0x1B,0x74,0x13];
+  const textBytes=toCP858bytes(text);
+  return [{type:'raw',format:'bytes',data:[...cmdCP858,...textBytes]}];
 }
 
 async function imprimirTicketESCPOS(n){
@@ -916,7 +931,7 @@ async function imprimirTicketESCPOS(n){
       await qz.websocket.connect({secure:false});
     }
     const config=qz.configs.create(PRINTER_NAME);
-    await qz.print(config,[{type:'raw',format:'plain',data:buildESCPOS(n)}]);
+    await qz.print(config,buildESCPOS(n));
     showToast('✓ Ticket impreso');
   }catch(err){
     console.warn('QZ Tray error:',err);
