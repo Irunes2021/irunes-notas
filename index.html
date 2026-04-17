@@ -869,21 +869,25 @@ const PAPER_COLS   = 24;            // 80mm paper, fuente normal (48 col)
 const CLUB_HEADER  = 'CC Irunes';
 const CLUB_DIR     = 'ccirunes.com';
 
-function ascii(s){var r={'á':'a','é':'e','í':'i','ó':'o','ú':'u','ü':'u','ñ':'n','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','Ü':'U','Ñ':'N'};return String(s).split('').map(function(c){return r[c]||(/[\x00-\x7F]/.test(c)?c:'');}).join('');}
+function ascii(s){var r={'á':'a','é':'e','í':'i','ó':'o','ú':'u','ü':'u','ñ':'n','Á':'A','É':'E','Í':'I','Ó':'O','Ú':'U','Ü':'U','Ñ':'N'};return String(s).split('').map(function(c){return r[c]||(c.charCodeAt(0)<128?c:'');}).join('');}
 function tPad(str,len,right){str=String(str).substring(0,len);while(str.length<len)str=right?str+' ':' '+str;return str;}
 function tCenter(str,w){str=String(str).substring(0,w);return ' '.repeat(Math.floor((w-str.length)/2))+str;}
 function tLine(w){return '-'.repeat(w);}
 
-// En CP858 el simbolo euro es el byte 0xD5
-function toCP858bytes(str){
-  var out=[];
+// Convierte string a base64 con euro como byte CP858 (0xD5)
+// QZ Tray 2.2.x no soporta format:'bytes', usamos format:'base64'
+function toBase64CP858(str){
+  var bytes=[];
   for(var i=0;i<str.length;i++){
     var c=str[i];
-    if(c==='€'){out.push(0xD5);}
-    else if(c.charCodeAt(0)<128){out.push(c.charCodeAt(0));}
-    else{var norm=c.normalize('NFD').replace(/[\u0300-\u036f]/g,'');out.push(norm.charCodeAt(0)<128?norm.charCodeAt(0):63);}
+    if(c==='\u20ac'){bytes.push(0xD5);}           // euro en CP858
+    else if(c.charCodeAt(0)<128){bytes.push(c.charCodeAt(0));}
+    else{bytes.push(63);}                           // '?' para otros no-ASCII
   }
-  return out;
+  // Convertir array de bytes a base64
+  var bin='';
+  for(var j=0;j<bytes.length;j++){bin+=String.fromCharCode(bytes[j]);}
+  return btoa(bin);
 }
 
 function buildESCPOS(n){
@@ -901,21 +905,27 @@ function buildESCPOS(n){
     'Pers: '+String(n.comensales||1),
     tLine(W),
     ...lineas.map(function(l){
-      const pr=fmt2(l.subtotal)+'€';
+      const pr=fmt2(l.subtotal)+'\u20ac';
       const np=ascii(l.nombre).substring(0,W-pr.length-2);
       return l.qty+'x '+tPad(np,W-pr.length-2,true)+' '+pr;
     }),
     tLine(W),
   ];
-  if(n.propina>0) rows.push('Propina: '+fmt2(n.propina)+'€');
-  rows.push('TOTAL: '+fmt2(n.total)+' €');
+  if(n.propina>0) rows.push('Propina: '+fmt2(n.propina)+'\u20ac');
+  rows.push('TOTAL: '+fmt2(n.total)+' \u20ac');
   rows.push(tLine(W));
   rows.push('Gracias por su visita');
   rows.push('\n\n\n\n\n\n');
   const text=rows.join('\n');
-  const cmdCP858=[0x1B,0x74,0x13];
-  const textBytes=toCP858bytes(text);
-  return [{type:'raw',format:'bytes',data:[...cmdCP858,...textBytes]}];
+  // ESC t 19 = CP858 (incluye euro); enviar como base64
+  var cmdCP858=[0x1B,0x74,0x13];
+  var cmdBin='';
+  for(var k=0;k<cmdCP858.length;k++){cmdBin+=String.fromCharCode(cmdCP858[k]);}
+  var cmdB64=btoa(cmdBin);
+  return [
+    {type:'raw',format:'base64',data:cmdB64},
+    {type:'raw',format:'base64',data:toBase64CP858(text)}
+  ];
 }
 
 async function imprimirTicketESCPOS(n){
@@ -932,7 +942,7 @@ async function imprimirTicketESCPOS(n){
     }
     const config=qz.configs.create(PRINTER_NAME);
     await qz.print(config,buildESCPOS(n));
-    showToast('✓ Ticket impreso');
+    showToast('\u2713 Ticket impreso');
   }catch(err){
     console.warn('QZ Tray error:',err);
     _fallbackPrint(n);
