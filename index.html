@@ -128,6 +128,20 @@
   .stat-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-top:.1rem;}
   .divider{height:1px;background:var(--border);margin:1rem 0;}
 
+
+  /* Carta admin drag-and-drop */
+  .carta-cat-block{margin-bottom:1rem;}
+  .carta-cat-title{font-size:.9rem;font-weight:600;color:var(--gold);padding:.45rem .85rem;background:var(--dark);border-radius:8px;margin-bottom:.4rem;display:flex;align-items:center;gap:.5rem;}
+  .carta-items-list{min-height:20px;}
+  .carta-item-row{display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.5rem .75rem;margin-bottom:.3rem;gap:.5rem;transition:box-shadow .15s,opacity .15s;cursor:default;}
+  .carta-item-row.dragging{opacity:.4;box-shadow:0 4px 16px rgba(0,0,0,.15);}
+  .carta-item-row.drag-over{border-color:var(--gold);background:rgba(201,168,76,.06);}
+  .drag-handle{font-size:1rem;color:var(--border);cursor:grab;padding:.1rem .2rem;flex-shrink:0;touch-action:none;user-select:none;}
+  .drag-handle:active{cursor:grabbing;}
+  .move-btns{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+  .move-btn{width:22px;height:18px;border:1px solid var(--border);background:var(--surface);border-radius:4px;font-size:.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text-muted);line-height:1;padding:0;}
+  .move-btn:hover{background:var(--brown);color:#fff;border-color:var(--brown);}
+
   .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--text-muted);}
   .empty-state .empty-icon{font-size:2.5rem;margin-bottom:.75rem;}
   .empty-state p{font-size:.83rem;line-height:1.6;}
@@ -749,21 +763,124 @@ let editingProducto=null; // {catIdx, itemIdx} or null for new
 function renderCartaAdmin(){
   const list=document.getElementById('carta-admin-list');
   if(!list)return;
-  let html='';
-  CARTA.forEach(function(cat){
-    html+='<div style="margin-bottom:.75rem;">'+
-      '<div style="font-size:.9rem;font-weight:600;color:var(--gold);padding:.4rem .75rem;background:var(--dark);border-radius:8px;margin-bottom:.4rem;">'+cat.icon+' '+cat.cat+'</div>';
-    cat.items.forEach(function(item){
-      html+='<div style="display:flex;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.55rem .85rem;margin-bottom:.3rem;gap:.5rem;">'+
-        '<span style="flex:1;font-size:.85rem;">'+item.nombre+'</span>'+
-        '<span style="font-size:.85rem;font-weight:600;min-width:3rem;text-align:right;">'+fmt2(item.precio)+'€</span>'+
-        '<button data-id="'+item.id+'" onclick="openEditProducto(this.dataset.id)" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--brown);margin-left:.4rem;">Editar</button>'+
-        '<button data-id="'+item.id+'" data-nombre="'+item.nombre.replace(/"/g,'&quot;')+'" onclick="deleteProducto(this.dataset.id,this.dataset.nombre)" style="background:none;border:1px solid rgba(139,32,32,.3);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--red);">✕</button>'+
-      '</div>';
+  list.innerHTML='';
+  CARTA.forEach(function(cat,catIdx){
+    const block=document.createElement('div');
+    block.className='carta-cat-block';
+    block.dataset.cat=cat.cat;
+
+    const title=document.createElement('div');
+    title.className='carta-cat-title';
+    title.innerHTML=cat.icon+' '+cat.cat;
+    block.appendChild(title);
+
+    const itemsList=document.createElement('div');
+    itemsList.className='carta-items-list';
+    itemsList.dataset.cat=cat.cat;
+
+    cat.items.forEach(function(item,itemIdx){
+      itemsList.appendChild(makeItemRow(item, cat.items.length, catIdx, itemIdx));
     });
-    html+='</div>';
+
+    // Drag-and-drop for desktop
+    setupDragDrop(itemsList, cat.cat);
+
+    block.appendChild(itemsList);
+    list.appendChild(block);
   });
-  list.innerHTML=html;
+}
+
+function makeItemRow(item, total, catIdx, itemIdx){
+  const row=document.createElement('div');
+  row.className='carta-item-row';
+  row.dataset.id=item.id;
+  row.draggable=true;
+
+  row.innerHTML=
+    '<span class="drag-handle" title="Arrastrar para reordenar">☰</span>'+
+    '<div class="move-btns">'+
+      '<button class="move-btn" title="Subir" data-mid="'+item.id+'" data-mdir="up" onclick="moveItem(+this.dataset.mid,this.dataset.mdir)" '+(itemIdx===0?'disabled':'')+'>▲</button>'+
+      '<button class="move-btn" title="Bajar" data-mid="'+item.id+'" data-mdir="down" onclick="moveItem(+this.dataset.mid,this.dataset.mdir)" '+(itemIdx===total-1?'disabled':'')+'>▼</button>'+
+    '</div>'+
+    '<span style="flex:1;font-size:.85rem;">'+item.nombre+'</span>'+
+    '<span style="font-size:.85rem;font-weight:600;min-width:3rem;text-align:right;">'+fmt2(item.precio)+'€</span>'+
+    '<button data-id="'+item.id+'" onclick="openEditProducto(this.dataset.id)" style="background:none;border:1px solid var(--border);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--brown);">Editar</button>'+
+    '<button data-id="'+item.id+'" data-nombre="'+item.nombre.replace(/"/g,'&quot;')+'" onclick="deleteProducto(this.dataset.id,this.dataset.nombre)" style="background:none;border:1px solid rgba(139,32,32,.3);border-radius:7px;padding:.25rem .55rem;font-size:.7rem;cursor:pointer;color:var(--red);">✕</button>';
+
+  return row;
+}
+
+// ── DRAG & DROP ──────────────────────────────────────────────
+let _dragItem=null, _dragCat=null;
+
+function setupDragDrop(container, catNombre){
+  container.addEventListener('dragstart',function(e){
+    _dragItem=e.target.closest('.carta-item-row');
+    _dragCat=catNombre;
+    if(!_dragItem)return;
+    setTimeout(()=>_dragItem.classList.add('dragging'),0);
+  });
+  container.addEventListener('dragend',function(){
+    if(_dragItem) _dragItem.classList.remove('dragging');
+    container.querySelectorAll('.carta-item-row').forEach(r=>r.classList.remove('drag-over'));
+    _dragItem=null;
+  });
+  container.addEventListener('dragover',function(e){
+    e.preventDefault();
+    if(!_dragItem||_dragCat!==catNombre)return;
+    const over=e.target.closest('.carta-item-row');
+    if(!over||over===_dragItem)return;
+    container.querySelectorAll('.carta-item-row').forEach(r=>r.classList.remove('drag-over'));
+    over.classList.add('drag-over');
+    // Reorder in DOM
+    const rows=[...container.querySelectorAll('.carta-item-row')];
+    const fromIdx=rows.indexOf(_dragItem);
+    const toIdx=rows.indexOf(over);
+    if(fromIdx<toIdx) container.insertBefore(_dragItem,over.nextSibling);
+    else container.insertBefore(_dragItem,over);
+  });
+  container.addEventListener('drop',function(e){
+    e.preventDefault();
+    if(!_dragItem||_dragCat!==catNombre)return;
+    container.querySelectorAll('.carta-item-row').forEach(r=>r.classList.remove('drag-over'));
+    // Persist new order
+    const rows=[...container.querySelectorAll('.carta-item-row')];
+    persistOrder(rows, catNombre);
+  });
+}
+
+async function persistOrder(rows, catNombre){
+  const updates=rows.map(function(row,idx){
+    return sb.from('carta').update({orden:idx+1}).eq('id',parseInt(row.dataset.id));
+  });
+  await Promise.all(updates);
+  await loadCarta();
+  renderCartaAdmin();
+  renderCarta();
+}
+
+async function moveItem(id, dir){
+  id=parseInt(id);
+  // Find in CARTA
+  let foundCat=null, foundIdx=-1;
+  CARTA.forEach(function(cat){
+    cat.items.forEach(function(item,idx){
+      if(item.id===id){foundCat=cat;foundIdx=idx;}
+    });
+  });
+  if(!foundCat||foundIdx===-1)return;
+  const items=foundCat.items;
+  const swapIdx=dir==='up'?foundIdx-1:foundIdx+1;
+  if(swapIdx<0||swapIdx>=items.length)return;
+  // Swap orden values
+  const a=items[foundIdx], b=items[swapIdx];
+  await Promise.all([
+    sb.from('carta').update({orden:b.orden}).eq('id',a.id),
+    sb.from('carta').update({orden:a.orden}).eq('id',b.id)
+  ]);
+  await loadCarta();
+  renderCartaAdmin();
+  renderCarta();
 }
 
 function openAddProducto(){
@@ -809,9 +926,9 @@ async function saveProducto(){
     if(error){err.textContent='Error al guardar. Intenta de nuevo.';err.style.display='block';return;}
     showToast('✓ Producto actualizado');
   } else {
-    // Get max orden for this cat
-    const cat=CARTA.find(function(c){return c.cat===catNombre;});
-    const maxOrden=cat?Math.max(0,...cat.items.map(function(i){return i.orden;})):0;
+    // Get max orden for this cat from DB (not local state, to avoid conflicts)
+    const {data:existing}=await sb.from('carta').select('orden').eq('categoria',catNombre).eq('activo',true).order('orden',{ascending:false}).limit(1);
+    const maxOrden=existing&&existing.length>0?existing[0].orden:0;
     const {error}=await sb.from('carta').insert([{categoria:catNombre,icono:icon,nombre:nombre,precio:precio,orden:maxOrden+1,cat_orden:CAT_ORDEN[catNombre]||99,activo:true}]);
     if(error){err.textContent='Error al guardar. Intenta de nuevo.';err.style.display='block';return;}
     showToast('✓ Producto añadido');
