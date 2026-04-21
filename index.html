@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Notas de Gasto · CC Irunes</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -124,8 +124,8 @@
       display:flex;align-items:center;justify-content:space-between;
       padding:.55rem 0;border-bottom:1px solid var(--border);gap:.5rem;
     }
-    .nota-linea-nombre{font-size:.85rem;color:var(--dark);flex:1;line-height:1.3;}
-    .nota-linea-precio{font-size:.88rem;color:var(--brown);font-weight:600;white-space:nowrap;margin-left:.25rem;}
+    .nota-linea-nombre{font-size:.88rem;color:var(--dark);flex:1;line-height:1.3;font-weight:500;}
+    .nota-linea-precio{font-size:.95rem;color:var(--dark);font-weight:700;white-space:nowrap;margin-left:.25rem;}
     .nota-linea-qty{display:flex;align-items:center;gap:.35rem;}
     .nota-qty-btn{
       width:26px;height:26px;
@@ -154,8 +154,15 @@
     .btn-pagar-tpv:hover{background:var(--gold-light);}
     .btn-pagar-tpv:disabled{opacity:.35;cursor:not-allowed;}
 
-    /* Hide old elements */
-    .total-bar{display:none!important;}
+    /* Tamaños de fuente más grandes en TPV */
+    .producto-name{font-size:1rem;}
+    .producto-price{font-size:1rem;}
+    .qty-btn{width:34px;height:34px;font-size:1.1rem;}
+    .qty-num{font-size:1.1rem;}
+    #col-cat-titulo{font-size:1.25rem;}
+    .nota-qty-btn{width:30px;height:30px;font-size:1rem;}
+    .nota-qty-num{font-size:1rem;}
+    .nota-linea-tpv{padding:.65rem 0;}
     #tpv-top-bar{display:none!important;}
   }
 
@@ -1245,7 +1252,7 @@ function renderNotaTPV(){
     div.innerHTML=
       '<div style="flex:1;">'+
         '<div class="nota-linea-nombre">'+item.nombre+'</div>'+
-        '<div style="font-size:.72rem;color:rgba(255,255,255,.4);">'+fmt2(item.precio)+'€ × '+item.qty+'</div>'+
+        '<div style="font-size:.75rem;color:var(--text-muted);">'+fmt2(item.precio)+'€ × '+item.qty+'</div>'+
       '</div>'+
       '<span class="nota-linea-precio">'+fmt2(item.precio*item.qty)+'€</span>'+
       '<div class="nota-linea-qty">'+
