@@ -23,7 +23,7 @@
     #app-screen{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
     #app-screen .app-header{flex-shrink:0;}
     #app-screen .tabs{flex-shrink:0;}
-    #app-screen .app-header{padding:.6rem 1.25rem;}
+    #app-screen .app-header{padding:.45rem 1.25rem;}
 
     #tab-carta{flex-direction:column;height:calc(100vh - 88px);overflow:hidden;padding:0;}
     #tab-historial,#tab-admin{
@@ -153,6 +153,18 @@
     }
     .btn-pagar-tpv:hover{background:var(--gold-light);}
     .btn-pagar-tpv:disabled{opacity:.35;cursor:not-allowed;}
+
+    /* Tabs más grandes en TPV */
+    .tab{font-size:1rem;padding:.75rem .5rem;font-weight:500;}
+    .tab.active{color:var(--gold);}
+
+    /* Btn inicio más grande y sin tapar título */
+    .btn-inicio{position:static!important;display:inline-flex!important;font-size:.85rem;padding:.4rem 1rem;margin-right:.75rem;}
+
+    /* Footer nota más compacto para que no se corte */
+    #col-nota-footer{padding:.85rem 1.25rem;}
+    .tpv-total-amount{font-size:1.8rem;margin-bottom:.5rem;}
+    .btn-pagar-tpv{padding:.85rem;font-size:1.05rem;}
 
     /* Tamaños de fuente más grandes en TPV */
     .producto-name{font-size:1rem;}
@@ -294,7 +306,7 @@
   .empty-state{text-align:center;padding:2.5rem 1rem;color:var(--text-muted);}
   .empty-state .empty-icon{font-size:2.5rem;margin-bottom:.75rem;}
   .empty-state p{font-size:.83rem;line-height:1.6;}
-  .btn-inicio{position:fixed;top:.6rem;left:.75rem;background:rgba(26,18,8,.85);color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:.35rem .85rem;font-family:'DM Sans',sans-serif;font-size:.75rem;cursor:pointer;z-index:200;display:none;backdrop-filter:blur(4px);text-decoration:none;}
+  .btn-inicio{background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);border-radius:20px;padding:.3rem .75rem;font-family:'DM Sans',sans-serif;font-size:.75rem;cursor:pointer;z-index:200;backdrop-filter:blur(4px);text-decoration:none;white-space:nowrap;}
   .toast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dark);color:var(--gold);padding:.7rem 1.4rem;border-radius:100px;font-size:.83rem;font-weight:500;border:1px solid rgba(201,168,76,.3);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:1000;white-space:nowrap;}
   .toast.show{transform:translateX(-50%) translateY(0);}
 
@@ -333,7 +345,10 @@
 <!-- APP -->
 <div id="app-screen">
   <div class="app-header">
-    <div class="header-title">🧾 Notas de Gasto</div>
+    <div style="display:flex;align-items:center;gap:.5rem;">
+      <a class="btn-inicio" id="btn-inicio" href="https://inicio.ccirunes.com" style="display:none;">← Inicio</a>
+      <div class="header-title">🧾 Notas de Gasto</div>
+    </div>
     <!-- Comensales + Turno centrado debajo del header -->
     <div id="tpv-header-bar" style="display:none;">
       <div class="tpv-bar-group">
@@ -561,7 +576,7 @@
   </div>
 </div>
 
-<a class="btn-inicio" id="btn-inicio" href="https://inicio.ccirunes.com">← Inicio</a>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1298,7 +1313,7 @@ function updateTotalTPV(){
   const params=new URLSearchParams(window.location.search);
   const ref=document.referrer;
   if(params.get('modo')==='quiosco'||ref.includes('inicio.ccirunes.com')||ref.includes('ccirunes.com/inicio')){
-    document.getElementById('btn-inicio').style.display='block';
+    document.getElementById('btn-inicio').style.display='inline-flex';
   }
 })();
 // ── IMPRESIÓN TÉRMICA QZ TRAY ────────────────────────────────
