@@ -17,6 +17,148 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--dark);min-height:100vh;max-width:480px;margin:0 auto;}
 
+  /* TPV 3 columnas */
+  @media(min-width:768px){
+    body{max-width:100%;margin:0;}
+    #app-screen{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+    #app-screen .app-header{flex-shrink:0;}
+    #app-screen .tabs{flex-shrink:0;}
+    #app-screen .app-header{padding:.6rem 1.25rem;}
+
+    #tab-carta{flex-direction:column;height:calc(100vh - 88px);overflow:hidden;padding:0;}
+    #tab-historial,#tab-admin{
+      padding:1.5rem 2rem;
+      overflow-y:auto;
+      height:calc(100vh - 88px);
+      max-width:780px;
+      margin:0 auto;
+      width:100%;
+      box-sizing:border-box;
+    }
+
+    /* Barra central: comensales y turno */
+    #tpv-header-bar{
+      display:none;
+      background:var(--surface);
+      border-bottom:2px solid var(--border);
+      padding:.75rem 2rem;
+      align-items:center;
+      justify-content:center;
+      gap:2.5rem;
+      flex-shrink:0;
+    }
+    .tpv-bar-group{display:flex;align-items:center;gap:.75rem;}
+    .tpv-bar-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);font-weight:500;}
+    #tpv-header-bar .qty-btn{
+      width:36px;height:36px;font-size:1.1rem;
+      border:2px solid var(--border);background:#fff;
+      border-radius:8px;cursor:pointer;color:var(--brown);
+      display:flex;align-items:center;justify-content:center;
+      transition:all .15s;
+    }
+    #tpv-header-bar .qty-btn:hover{background:var(--brown);color:#fff;border-color:var(--brown);}
+    #com-num-tpv{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--dark);min-width:1.8rem;text-align:center;}
+    /* Botones turno en la barra */
+    .tpv-turno-btn{
+      padding:.55rem 1.1rem;
+      border:2px solid var(--border);
+      background:#fff;
+      border-radius:10px;
+      font-family:'DM Sans',sans-serif;
+      font-size:.88rem;
+      cursor:pointer;
+      color:var(--text-muted);
+      transition:all .2s;
+    }
+    .tpv-turno-btn.active{
+      border-color:var(--gold);
+      background:var(--gold);
+      color:var(--dark);
+      font-weight:600;
+    }
+    .tpv-turno-btn:hover:not(.active){background:var(--cream);border-color:var(--brown);}
+
+    /* 3 columnas */
+    #tpv-cols{flex:1;overflow:hidden;flex-direction:row;}
+
+    /* Col izquierda: categorías — fondo crema, no oscuro */
+    #col-cats{flex:1;background:var(--cream);overflow-y:auto;padding:.5rem 0;border-right:2px solid var(--border);}
+    .cat-btn{
+      display:flex;flex-direction:column;align-items:center;gap:.4rem;
+      padding:1rem .5rem;cursor:pointer;
+      border-left:4px solid transparent;
+      border-bottom:1px solid var(--border);
+      transition:all .2s;width:100%;background:transparent;
+    }
+    .cat-btn:hover{background:rgba(201,168,76,.08);}
+    .cat-btn.active{
+      background:rgba(201,168,76,.15);
+      border-left-color:var(--gold);
+    }
+    .cat-btn-icon{font-size:1.8rem;}
+    .cat-btn-name{
+      font-size:.68rem;text-transform:uppercase;letter-spacing:.1em;
+      color:var(--text-muted);text-align:center;line-height:1.3;font-weight:500;
+    }
+    .cat-btn.active .cat-btn-name{color:var(--brown);font-weight:700;}
+
+    /* Col central: productos */
+    #col-productos{flex:1;overflow-y:auto;padding:1rem;background:var(--surface);border-right:2px solid var(--border);}
+    #col-cat-titulo{
+      font-family:'Playfair Display',serif;color:var(--dark);font-size:1.15rem;
+      margin-bottom:.75rem;padding-bottom:.6rem;border-bottom:2px solid var(--border);
+    }
+
+    /* Col derecha: nota actual — fondo crema, no oscuro */
+    #col-nota{flex:1;background:var(--cream);display:flex;flex-direction:column;overflow:hidden;}
+    #col-nota-header{
+      padding:1rem 1.25rem .75rem;
+      border-bottom:2px solid var(--border);
+      background:var(--surface);
+    }
+    #col-nota-header h3{
+      font-family:'Playfair Display',serif;color:var(--dark);font-size:1.1rem;font-weight:400;
+    }
+    #col-nota-lineas{flex:1;overflow-y:auto;padding:.75rem 1rem;}
+    .nota-linea-tpv{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:.55rem 0;border-bottom:1px solid var(--border);gap:.5rem;
+    }
+    .nota-linea-nombre{font-size:.85rem;color:var(--dark);flex:1;line-height:1.3;}
+    .nota-linea-precio{font-size:.88rem;color:var(--brown);font-weight:600;white-space:nowrap;margin-left:.25rem;}
+    .nota-linea-qty{display:flex;align-items:center;gap:.35rem;}
+    .nota-qty-btn{
+      width:26px;height:26px;
+      border:1.5px solid var(--border);background:#fff;
+      border-radius:6px;font-size:.9rem;cursor:pointer;
+      color:var(--brown);display:flex;align-items:center;justify-content:center;
+      line-height:1;padding:0;transition:all .15s;
+    }
+    .nota-qty-btn:hover{background:var(--brown);color:#fff;border-color:var(--brown);}
+    .nota-qty-num{font-size:.9rem;color:var(--dark);min-width:1.2rem;text-align:center;font-weight:600;}
+    #col-nota-empty{padding:3rem 1.25rem;text-align:center;color:var(--text-muted);font-size:.88rem;}
+    #col-nota-footer{
+      padding:1.25rem;
+      border-top:2px solid var(--border);
+      background:var(--surface);
+    }
+    .tpv-total-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.2rem;}
+    .tpv-total-amount{font-family:'Playfair Display',serif;color:var(--dark);font-size:2.2rem;margin-bottom:.75rem;}
+    .btn-pagar-tpv{
+      width:100%;padding:1.1rem;
+      background:var(--gold);color:var(--dark);
+      border:none;border-radius:12px;
+      font-family:'Playfair Display',serif;font-size:1.15rem;
+      cursor:pointer;transition:background .2s;font-weight:400;
+    }
+    .btn-pagar-tpv:hover{background:var(--gold-light);}
+    .btn-pagar-tpv:disabled{opacity:.35;cursor:not-allowed;}
+
+    /* Hide old elements */
+    .total-bar{display:none!important;}
+    #tpv-top-bar{display:none!important;}
+  }
+
   /* LOGIN */
   #login-screen{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;background:var(--dark);position:relative;overflow:hidden;}
   #login-screen::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 20%,rgba(201,168,76,.15) 0%,transparent 60%),radial-gradient(ellipse at 70% 80%,rgba(107,66,38,.3) 0%,transparent 60%);}
@@ -185,6 +327,23 @@
 <div id="app-screen">
   <div class="app-header">
     <div class="header-title">🧾 Notas de Gasto</div>
+    <!-- Comensales + Turno centrado debajo del header -->
+    <div id="tpv-header-bar" style="display:none;">
+      <div class="tpv-bar-group">
+        <span class="tpv-bar-label">Comensales</span>
+        <button class="qty-btn" onclick="changeCom(-1)">−</button>
+        <span id="com-num-tpv">1</span>
+        <button class="qty-btn" onclick="changeCom(1)">+</button>
+      </div>
+      <div class="tpv-bar-group">
+        <span class="tpv-bar-label">Turno</span>
+        <button class="tpv-turno-btn active" id="turno-comida-tpv" onclick="setTurnoTPV('comida',this)">🍽️ Comida</button>
+        <button class="tpv-turno-btn" id="turno-merienda-tpv" onclick="setTurnoTPV('merienda',this)">☕ Merienda</button>
+        <button class="tpv-turno-btn" id="turno-cena-tpv" onclick="setTurnoTPV('cena',this)">🌙 Cena</button>
+      </div>
+    </div>
+
+    <!-- TPV: 3 columnas -->
     <div class="header-right">
       <span id="admin-badge" class="admin-badge" style="display:none">Admin</span>
       <span class="logout-btn" onclick="doLogout()">Salir</span>
@@ -193,12 +352,42 @@
   </div>
   <div class="tabs" id="main-tabs">
     <div class="tab active" id="tab-btn-carta" onclick="switchTab('carta')">📋 Carta</div>
-    <div class="tab" onclick="switchTab('historial')">🕐 Mis notas</div>
+    <div class="tab" id="tab-btn-historial" onclick="switchTab('historial')">🕐 Mis notas</div>
     <div class="tab admin-only" style="display:none" onclick="switchTab('admin')">⚙️ Admin</div>
   </div>
 
   <!-- CARTA -->
   <div id="tab-carta" class="content">
+
+    <!-- TPV: 3 columnas -->
+    <div id="tpv-cols" style="display:none;flex:1;overflow:hidden;flex-direction:row;">
+      <!-- Col izquierda: categorías -->
+      <div id="col-cats"></div>
+
+      <!-- Col central: productos de la categoría -->
+      <div id="col-productos">
+        <div id="col-cat-titulo"></div>
+        <div id="col-productos-lista"></div>
+      </div>
+
+      <!-- Col derecha: nota actual -->
+      <div id="col-nota">
+        <div id="col-nota-header">
+          <h3>🧾 Nota actual</h3>
+        </div>
+        <div id="col-nota-lineas">
+          <div id="col-nota-empty">Sin productos</div>
+        </div>
+        <div id="col-nota-footer">
+          <div class="tpv-total-label">Total</div>
+          <div class="tpv-total-amount" id="tpv-total-display">0,00 €</div>
+          <button class="btn-pagar-tpv" id="btn-pagar-tpv" onclick="openPago()" disabled>Pagar →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MÓVIL: layout original -->
+    <div id="movil-carta">
     <!-- Comensales + turno -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:1rem;">
       <div style="display:flex;gap:.75rem;align-items:center;margin-bottom:.75rem;">
@@ -221,6 +410,7 @@
       </div>
     </div>
     <div id="carta-content"></div>
+    </div><!-- fin movil-carta -->
   </div>
 
   <!-- HISTORIAL -->
@@ -377,17 +567,22 @@ let SOCIOS={};
 // ── CARTA (cargada desde Supabase) ───────────────────────────
 let CARTA=[];
 const CAT_ICONS={'Vinos':'🍷','Refrescos y Cervezas':'🍺','Cafés':'☕','Licores':'🥃','Cocina':'🍳'};
-const CAT_ORDEN={'Vinos':1,'Refrescos y Cervezas':2,'Cafés':3,'Licores':4,'Cocina':5};
+const CAT_ORDEN={'Vinos':1,'Refrescos y Cervezas':2,'Licores':3,'Cafés':4,'Cocina':5};
 
 async function loadCarta(){
   const {data,error}=await sb.from('carta').select('*').eq('activo',true).order('cat_orden').order('orden');
   if(error){console.error(error);return;}
   const cats={};
   (data||[]).forEach(function(row){
-    if(!cats[row.categoria]) cats[row.categoria]={cat:row.categoria,icon:row.icono||CAT_ICONS[row.categoria]||'🍽️',items:[]};
+    if(!cats[row.categoria]) cats[row.categoria]={cat:row.categoria,icon:row.icono||CAT_ICONS[row.categoria]||'🍽️',items:[],cat_orden:row.cat_orden||CAT_ORDEN[row.categoria]||99};
     cats[row.categoria].items.push({id:row.id,nombre:row.nombre,precio:parseFloat(row.precio),orden:row.orden});
   });
-  CARTA=Object.values(cats);
+  // Ordenar SIEMPRE por CAT_ORDEN local, ignorando cat_orden de la BD
+  CARTA=Object.values(cats).sort(function(a,b){
+    const oa=CAT_ORDEN[a.cat]!=null?CAT_ORDEN[a.cat]:99;
+    const ob=CAT_ORDEN[b.cat]!=null?CAT_ORDEN[b.cat]:99;
+    return oa-ob;
+  });
 }
 
 // ── ESTADO ───────────────────────────────────────────────────
@@ -438,20 +633,16 @@ async function doLogin(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   btn.innerHTML='Entrar';btn.disabled=false;
-  // Ocultar pestaña Carta en móvil
-  if(window.innerWidth < 768){
-    document.getElementById('tab-btn-carta').style.display='none';
-  }
   if(s.admin){
     document.getElementById('admin-badge').style.display='inline';
     document.querySelectorAll('.admin-only').forEach(el=>el.style.display='flex');
   }
-  // En móvil (pantalla pequeña) ir directamente a Mis notas
-  // En tablet/ordenador (pantalla grande) ir a Carta para hacer notas
   const esPantallaGrande = window.innerWidth >= 768;
   if(esPantallaGrande){
     updateCocinaPrice();
     switchTab('carta');
+    initTPV();
+    if(CARTA.length) selectCatTPV(CARTA[0].cat);
   } else {
     switchTab('historial');
   }
@@ -524,6 +715,7 @@ function updateTotal(){
   const total=calcTotal();
   document.getElementById('total-display').textContent=fmt2(total)+' €';
   document.getElementById('btn-pagar').disabled=total===0;
+  if(esTPV()) updateTotalTPV();
 }
 
 // ── PAGO ─────────────────────────────────────────────────────
@@ -552,34 +744,33 @@ function setTurno(t,el){
 }
 function changeCom(d){
   numComensales=Math.max(1,numComensales+d);
-  document.getElementById('com-num').textContent=numComensales;
+  const elM=document.getElementById('com-num');
+  const elT=document.getElementById('com-num-tpv');
+  if(elM) elM.textContent=numComensales;
+  if(elT) elT.textContent=numComensales;
   updateCocinaPrice();
 }
 function updateCocinaPrice(){
-  // Auto-fill cocina turno item based on current turno + comensales
-  const turnoMap={
-    comida:'Bazkaria · Comida (por comensal)',
-    merienda:'Merienda (por comensal)',
-    cena:'Afaria · Cena (por comensal)'
-  };
-  // Clear all 3 turno cocina items first
-  ['comida','merienda','cena'].forEach(function(t){
-    const nombre=turnoMap[t];
-    const cat=CARTA.find(function(c){return c.cat==='Cocina';});
-    if(!cat)return;
-    const item=cat.items.find(function(it){return it.nombre===nombre;});
-    if(!item)return;
-    if(t!==turnoActual) cantidades[item.id]=0;
+  const turnoKeys={comida:'comida',merienda:'merienda',cena:'cena'};
+  const cat=CARTA.find(function(c){return c.cat==='Cocina';});
+  if(!cat)return;
+  // Limpiar los 3 items de turno (buscar por nombre que contenga la palabra clave)
+  cat.items.forEach(function(item){
+    const n=item.nombre.toLowerCase();
+    const esTurno=(n.includes('comida')||n.includes('bazkaria')||n.includes('merienda')||n.includes('cena')||n.includes('afaria'))&&(n.includes('comensal')||n.includes('pers'));
+    if(esTurno){
+      const esActual=(turnoActual==='comida'&&(n.includes('comida')||n.includes('bazkaria')))
+        ||(turnoActual==='merienda'&&n.includes('merienda'))
+        ||(turnoActual==='cena'&&(n.includes('cena')||n.includes('afaria')));
+      cantidades[item.id]=esActual?numComensales:0;
+    }
   });
-  // Set current turno item to numComensales
-  const nombre=turnoMap[turnoActual];
-  const cat=CARTA.find(c=>c.cat==='Cocina');
-  if(cat){
-    const item=cat.items.find(function(it){return it.nombre===nombre;});
-    if(item) cantidades[item.id]=numComensales;
-  }
-  // Re-render carta to reflect changes
   renderCarta();
+  if(esTPV()){
+    renderNotaTPV();
+    updateTotalTPV();
+    if(catSeleccionada) selectCatTPV(catSeleccionada);
+  }
 }
 function setPago(tipo){
   formaPago=tipo;
@@ -640,6 +831,7 @@ async function confirmarPago(){
   closePago();
   cantidades={};
   renderCarta();
+  if(esTPV()){ renderNotaTPV(); updateTotalTPV(); if(catSeleccionada) selectCatTPV(catSeleccionada); }
   showToast('✓ Nota guardada correctamente');
 }
 
@@ -749,9 +941,16 @@ function renderAdmin(){
 
 // ── TABS ─────────────────────────────────────────────────────
 function switchTab(tab){
-  ['carta','historial','admin'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
-  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['carta','historial','admin'][i]===tab));
-  if(tab==='historial')renderHistorial();
+  const cartaEl = document.getElementById('tab-carta');
+  const histEl = document.getElementById('tab-historial');
+  const adminEl = document.getElementById('tab-admin');
+  cartaEl.style.display = tab==='carta' ? (esTPV() ? 'flex' : 'block') : 'none';
+  histEl.style.display = tab==='historial' ? 'block' : 'none';
+  adminEl.style.display = tab==='admin' ? 'block' : 'none';
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  const tabBtn = document.getElementById('tab-btn-'+tab);
+  if(tabBtn) tabBtn.classList.add('active');
+  if(tab==='historial') renderHistorial();
   if(tab==='admin'){
     loadNotas().then(function(){renderAdmin();renderCartaAdmin();});
   }
@@ -965,6 +1164,122 @@ function setFechaFilter(f,el){
   if(f==='todas') document.getElementById('admin-fecha-input').value='';
   renderAdmin();
 }
+
+// ── TPV 3 COLUMNAS ──────────────────────────────────────────
+let catSeleccionada = null;
+const esTPV = () => window.innerWidth >= 768;
+
+function initTPV(){
+  if(!esTPV()) return;
+  document.getElementById('tpv-header-bar').style.display='flex';
+  document.getElementById('tpv-cols').style.display='flex';
+  document.getElementById('movil-carta').style.display='none';
+  setTurnoTPV(turnoActual, document.getElementById('turno-'+turnoActual+'-tpv'));
+  renderCatsTPV();
+}
+
+function renderCatsTPV(){
+  const col = document.getElementById('col-cats');
+  col.innerHTML = CARTA.map(function(cat){
+    const activa = cat.cat === catSeleccionada ? 'active' : '';
+    return '<div class="cat-btn '+activa+'" onclick="selectCatTPV(\''+cat.cat.replace(/'/g,"\\'")+'\')" >'+
+      '<span class="cat-btn-icon">'+cat.icon+'</span>'+
+      '<span class="cat-btn-name">'+cat.cat+'</span>'+
+    '</div>';
+  }).join('');
+}
+
+function selectCatTPV(catNombre){
+  catSeleccionada = catNombre;
+  renderCatsTPV();
+  const cat = CARTA.find(c => c.cat === catNombre);
+  if(!cat) return;
+  document.getElementById('col-cat-titulo').textContent = cat.icon + ' ' + cat.cat;
+  document.getElementById('col-productos-lista').innerHTML = cat.items.map(function(item){
+    const key = item.id;
+    const qty = cantidades[key] || 0;
+    return '<div class="producto-row'+(qty>0?' selected':'')+'\" id="row_'+key+'">'+
+      '<span class="producto-name">'+item.nombre+'</span>'+
+      '<span class="producto-price">'+fmt2(item.precio)+'€</span>'+
+      '<div class="qty-ctrl">'+
+        '<button class="qty-btn" data-key="'+key+'" data-precio="'+item.precio+'" data-dir="-1" onclick="changeQtyTPV(this)">−</button>'+
+        '<span class="qty-num" id="qty_'+key+'">'+qty+'</span>'+
+        '<button class="qty-btn" data-key="'+key+'" data-precio="'+item.precio+'" data-dir="1" onclick="changeQtyTPV(this)">+</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function changeQtyTPV(el){
+  const key = el.dataset.key;
+  const precio = parseFloat(el.dataset.precio);
+  const dir = parseInt(el.dataset.dir);
+  cantidades[key] = Math.max(0, (cantidades[key]||0) + dir);
+  const qEl = document.getElementById('qty_'+key);
+  if(qEl) qEl.textContent = cantidades[key];
+  const row = document.getElementById('row_'+key);
+  if(row){ if(cantidades[key]>0) row.classList.add('selected'); else row.classList.remove('selected'); }
+  updateTotal();
+  renderNotaTPV();
+}
+
+function renderNotaTPV(){
+  const lineas = document.getElementById('col-nota-lineas');
+  const empty = document.getElementById('col-nota-empty');
+  let items = [];
+  CARTA.forEach(function(cat){ cat.items.forEach(function(item){
+    const qty = cantidades[item.id]||0;
+    if(qty>0) items.push({nombre:item.nombre, qty:qty, precio:item.precio, id:item.id});
+  });});
+  if(!items.length){
+    if(empty) empty.style.display='block';
+    // remove existing lineas rows
+    lineas.querySelectorAll('.nota-linea-tpv').forEach(e=>e.remove());
+    return;
+  }
+  if(empty) empty.style.display='none';
+  lineas.querySelectorAll('.nota-linea-tpv').forEach(e=>e.remove());
+  items.forEach(function(item){
+    const div = document.createElement('div');
+    div.className='nota-linea-tpv';
+    div.innerHTML=
+      '<div style="flex:1;">'+
+        '<div class="nota-linea-nombre">'+item.nombre+'</div>'+
+        '<div style="font-size:.72rem;color:rgba(255,255,255,.4);">'+fmt2(item.precio)+'€ × '+item.qty+'</div>'+
+      '</div>'+
+      '<span class="nota-linea-precio">'+fmt2(item.precio*item.qty)+'€</span>'+
+      '<div class="nota-linea-qty">'+
+        '<button class="nota-qty-btn" data-key="'+item.id+'" data-precio="'+item.precio+'" data-dir="-1" onclick="changeQtyTPV(this)">−</button>'+
+        '<span class="nota-qty-num">'+item.qty+'</span>'+
+        '<button class="nota-qty-btn" data-key="'+item.id+'" data-precio="'+item.precio+'" data-dir="1" onclick="changeQtyTPV(this)">+</button>'+
+      '</div>';
+    lineas.appendChild(div);
+  });
+}
+
+function setTurnoTPV(t, el){
+  turnoActual = t;
+  // Sync mobile buttons
+  document.querySelectorAll('[id^="turno-comida"],[id^="turno-merienda"],[id^="turno-cena"]').forEach(b=>b.classList.remove('active'));
+  if(document.getElementById('turno-'+t)) document.getElementById('turno-'+t).classList.add('active');
+  // TPV turno buttons
+  ['comida','merienda','cena'].forEach(function(x){
+    const b = document.getElementById('turno-'+x+'-tpv');
+    if(b) b.classList.toggle('active', x===t);
+  });
+  updateCocinaPrice();
+  renderNotaTPV();
+}
+
+function updateTotalTPV(){
+  const total = calcTotal();
+  const el = document.getElementById('tpv-total-display');
+  const btn = document.getElementById('btn-pagar-tpv');
+  if(el) el.textContent = fmt2(total)+' €';
+  if(btn) btn.disabled = total===0;
+}
+
+// ── FIN TPV ──────────────────────────────────────────────────
 
 // Arranque: cargar socios y carta
 (async function(){
