@@ -1399,12 +1399,84 @@ async function imprimirTicketESCPOS(n){
     _fallbackPrint(n);
     return;
   }
+
+  const CERT = `-----BEGIN CERTIFICATE-----
+MIIECzCCAvOgAwIBAgIGAZ20GzMUMA0GCSqGSIb3DQEBCwUAMIGiMQswCQYDVQQG
+EwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UECgwS
+UVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBMTEMx
+HDAaBgkqhkiG9w0BCQEWDXN1cHBvcnRAcXouaW8xGjAYBgNVBAMMEVFaIFRyYXkg
+RGVtbyBDZXJ0MB4XDTI2MDQyMTA3MzI1NFoXDTQ2MDQyMTA3MzI1NFowgaIxCzAJ
+BgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJQ2FuYXN0b3RhMRswGQYD
+VQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsMElFaIEluZHVzdHJpZXMs
+IExMQzEcMBoGCSqGSIb3DQEJARYNc3VwcG9ydEBxei5pbzEaMBgGA1UEAwwRUVog
+VHJheSBEZW1vIENlcnQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDP
+czKMOgNmep/YRojgUa9ymvrVtKS3g56+fnYjGJq5YSoBQLzxEgTfutmR0BSswANi
+WQLhYZNHOqvZO5mcI2k4s0st5V0RPZwaXu2P1cCQor3qXZ+0VFFcKIAvAZFDpOii
+GuqVuJ7EjoyJJEsc7fLJzQe18Xha7dMFqCESFMLYBdv2Vkha+Z+6vZ/vU36+278c
+2rvy1VwHrUh7BhZIeRguLzFxJ9O+MBNKeZkvQrzKI5jqMNzcThEjtMM3yyWqR6oK
+iWa5aov8f+ybkmJIWE90CbBKqcPpR9FNMrpSzbC/DsaOXE4DCDme5aAkUiykFFXx
+B4vz6qYGjLVQw2je6rlDAgMBAAGjRTBDMBIGA1UdEwEB/wQIMAYBAf8CAQEwDgYD
+VR0PAQH/BAQDAgEGMB0GA1UdDgQWBBQQz0fQN5BmOjod5tuO85yOOFLxTjANBgkq
+hkiG9w0BAQsFAAOCAQEADJWZhQH9dy16SB2Nlr1Td0lY3SCu/SnQu918mks8AYI9
+DTVny/foRIM+f2bygnzI1mLyZwuUcIMMzs40vna6g8YZMvBGv/yGQCW07ZbSFznN
+dqmVRVl8uGvf6Btk9uVoZufjSv9Msvi6Lf9A63sLJoPkQu7Z9Ib8wR3Pv1pJglCw
+NFtx2WvnBINffhIu0g2d+EXNgQ2rGfXSA4ZHfde7V2vN7oY+IG5LpzoibCespEOR
+JR3pyPJrciQZ421xQu68jrV80K94vBSR7WgX+qbOi3r+LWMP57b0ue6Fk7GYR4zH
+FsXcnnkx5RysNz8OxoemZnI2VnvVO+5cjmTBbMjmFQ==
+-----END CERTIFICATE-----`;
+
+  const PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDPczKMOgNmep/Y
+RojgUa9ymvrVtKS3g56+fnYjGJq5YSoBQLzxEgTfutmR0BSswANiWQLhYZNHOqvZ
+O5mcI2k4s0st5V0RPZwaXu2P1cCQor3qXZ+0VFFcKIAvAZFDpOiiGuqVuJ7EjoyJ
+JEsc7fLJzQe18Xha7dMFqCESFMLYBdv2Vkha+Z+6vZ/vU36+278c2rvy1VwHrUh7
+BhZIeRguLzFxJ9O+MBNKeZkvQrzKI5jqMNzcThEjtMM3yyWqR6oKiWa5aov8f+yb
+kmJIWE90CbBKqcPpR9FNMrpSzbC/DsaOXE4DCDme5aAkUiykFFXxB4vz6qYGjLVQ
+w2je6rlDAgMBAAECggEAJAh+7bN/9rNzA1aRHOGjZ3U6/5bOi5+9mZoOvB7gdTXG
+3YvYpcj69r+WXgj2JmF91P3gDbTsp5Et22BKWMAf3TzrYI/3//AjJsN5YSQAPD9A
+XK6heGmy7h6M0V1k1YqV695gA9ybG0olaAbZUy+TnfDSl4xXWvf3UQK4p9LaWzot
+QNhLFyHqBgpPFExtnENIp6nHbqENm1R0TFae5nOBBlwxED7H6dYH5q1+9TQLTP1N
++24Y33q0d9Pfe1lm+nGgzMH7zw//nhn27MDPEB8RrokvzoIoDvW4/pgylIMf+1Nm
+nzXEbJ1MfXALHsxGw+EjTY0PRTwr5ww+IUyDUAaI+QKBgQDobeZd6i6Z5SaWb0u8
+16LMnfPgp4ZF64X79LZl87gTbrZDVH9xdbvk+2rxH3GHAfuVWhyYMkrhvF+KOazR
+MM1xM1zdg87aRrQSi8bAi1CQeg33C+kstCohltA1ODVhIJRJ/BytXbBtSnsfbN01
+/OccZUjWAUD1Y4bpO8s69Q0J6QKBgQDkfM85bCvpa8AwUCyYkJCNxSKspLlrOJbO
+Y+fJIm0rhYC/JU7i+M+3PN3AdSD0c5Lv4UL1jBQHxyCGUKSxSe8XHCyUVxwCtk/K
+19xeFS7V9SPTEanO4CibDKiLuNrBBPZJu6zaIS7jjiTMPLoo5oeL6A2JoJd4lw4u
+dS8gwb0CSwKBgA5rkxlMiCugHe7DZO2Ia19KhXDws9HutNdW7WIR5t+9xK0Utvtx
+FIE2YAIpsz9vDg7MEm4W4LJ0n3DR9zjbUEOvrhlILjM4o79q0J/thMgR6n/jS0os
+u1huJOjIXfdysACPFbBj2ahOMKlYdbj9wdDvL7+nQEJ5NEuQHCHCRlbRAoGAHGWK
+l5djCbqTgy2jrT5iSMxUV+KNDM9WpsXx26SEruEDtD3dxQWpQxu0b6Pe+aKXg2qa
+mMvU/XZ5C1hgb4xBw7yDqdf9qjSgTBRx1duKG5tA3Y2Xbheb1FFJbTwHK/AC7/z8
+KYvwOOXEmwF9HXIxLGklrZIg4SLc51c3CToq1GsCgYEAybdFvjIalERguxK1XSTh
+yXNNlqWxN2tqKjFQc2s57TJ3xK0UQqmcDzPtKgG96x058uiEGGwkyz0ByiWnsOYz
+pNKzmpBFLukdnpCrK1Mjd9SjS/7pXNK55KYkaRFd4NKDC7wl3SpFWFmUiDIMo3cm
+5N5/UMjDjVHsbWJ48Bc17k0=
+-----END PRIVATE KEY-----`;
+
   try{
     if(!qz.websocket.isActive()){
-      qz.security.setCertificatePromise(function(resolve){resolve('');});
+      qz.security.setCertificatePromise(function(resolve){ resolve(CERT); });
       qz.security.setSignatureAlgorithm('SHA512');
-      qz.security.setSignaturePromise(function(toSign){return function(resolve){resolve('');};});
-      await qz.websocket.connect({secure:false});
+      qz.security.setSignaturePromise(function(toSign){
+        return function(resolve, reject){
+          try{
+            const algo = { name:'RSASSA-PKCS1-v1_5', hash:{name:'SHA-512'} };
+            const keyData = PRIVATE_KEY.replace(/-----[^-]+-----/g,'').replace(/\s/g,'');
+            const binaryKey = Uint8Array.from(atob(keyData), c=>c.charCodeAt(0));
+            crypto.subtle.importKey('pkcs8', binaryKey.buffer, algo, false, ['sign'])
+              .then(function(key){
+                const msgBuf = new TextEncoder().encode(toSign);
+                return crypto.subtle.sign(algo, key, msgBuf);
+              })
+              .then(function(sig){
+                resolve(btoa(String.fromCharCode(...new Uint8Array(sig))));
+              })
+              .catch(reject);
+          }catch(e){ reject(e); }
+        };
+      });
+      await qz.websocket.connect();
     }
     const config=qz.configs.create(PRINTER_NAME);
     await qz.print(config,buildESCPOS(n));
