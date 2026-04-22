@@ -361,7 +361,7 @@
 <div id="app-screen">
   <div class="app-header">
     <div style="display:flex;align-items:center;gap:.5rem;">
-      <a class="btn-inicio" id="btn-inicio" href="https://inicio.ccirunes.com" style="display:none;">← Inicio</a>
+      <a class="btn-inicio" id="btn-inicio" href="https://inicio.ccirunes.com">← Inicio</a>
       <div class="header-title">🧾 Notas de Gasto</div>
     </div>
     <!-- Comensales + Turno centrado debajo del header -->
@@ -1323,14 +1323,7 @@ function updateTotalTPV(){
   await Promise.all([loadSocios(), loadCarta()]);
 })();
 
-// Show home button if coming from terminal
-(function(){
-  const params=new URLSearchParams(window.location.search);
-  const ref=document.referrer;
-  if(params.get('modo')==='quiosco'||ref.includes('inicio.ccirunes.com')||ref.includes('ccirunes.com/inicio')){
-    document.getElementById('btn-inicio').style.display='inline-flex';
-  }
-})();
+// Botón inicio siempre visible
 // ── IMPRESIÓN TÉRMICA QZ TRAY ────────────────────────────────
 const PRINTER_NAME = 'Generic / Text Only';  // Nombre en Windows TPV
 const PRINTER_IP   = null;          // Sin uso en modo USB
