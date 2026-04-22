@@ -348,8 +348,8 @@
       </div>
       <div class="field-group">
         <label>DNI</label>
-        <input type="password" id="login-pass" placeholder="Ej: 12345678A"
-          autocomplete="new-password">
+        <input type="tel" id="login-pass" placeholder="Ej: 12345678"
+          autocomplete="off" inputmode="numeric" pattern="[0-9]*">
         <div class="error-msg" id="login-error">Número de socio o DNI incorrecto</div>
       </div>
       <button class="btn-primary" id="login-btn" onclick="doLogin()">Entrar</button>
@@ -658,11 +658,11 @@ async function loadSocios(){
 // ── LOGIN ────────────────────────────────────────────────────
 async function doLogin(){
   const u=document.getElementById('login-user').value.trim().padStart(3,'0');
-  const p=document.getElementById('login-pass').value.trim().toUpperCase();
+  const p=document.getElementById('login-pass').value.trim().replace(/[^0-9]/g,'');
   const err=document.getElementById('login-error');
   const btn=document.getElementById('login-btn');
   const s=SOCIOS[u];
-  if(!s||s.dni.toUpperCase()!==p){err.style.display='block';return;}
+  if(!s||s.dni.replace(/[^0-9]/g,'')!==p){err.style.display='block';return;}
   err.style.display='none';
   btn.innerHTML='<span class="spinner"></span>Entrando…';btn.disabled=true;
   await loadNotas();
