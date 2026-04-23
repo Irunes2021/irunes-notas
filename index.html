@@ -879,6 +879,7 @@ function renderTicket(){
 }
 
 async function confirmarPago(){
+  console.log("confirmarPago called, mesaActual:", mesaActual, "formaPago:", formaPago);
   const subtotal=calcTotal();
   const propAmt=propinaAmt;
   const total=subtotal+propAmt;
@@ -1535,39 +1536,57 @@ pNKzmpBFLukdnpCrK1Mjd9SjS/7pXNK55KYkaRFd4NKDC7wl3SpFWFmUiDIMo3cm
 }
 
 function _fallbackPrint(n){
-  const lineas=JSON.parse(n.lineas||'[]');
-  const d=new Date(n.created_at||Date.now());
-  const fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
-  let html='<div style="text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed #ccc;">'+
-    '<h4 style="font-size:13px;margin:0 0 2px;">'+CLUB_HEADER+'</h4>'+
-    '<p style="font-size:10px;color:#666;">'+CLUB_DIR+'</p></div>'+
-    '<p style="font-size:11px;margin:2px 0;">Socio: Nº '+parseInt(n.socio_num)+' · '+sN(n.socio_num)+'</p>'+
-    '<p style="font-size:11px;margin:2px 0;">Fecha: '+fecha+'</p>'+
-    '<p style="font-size:11px;margin:2px 0 6px;">Turno: '+({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-')+' · '+n.comensales+' pers.</p>'+
-    '<div style="border-top:1px dashed #ccc;padding-top:6px;">';
-  lineas.forEach(function(l){html+='<div style="display:flex;justify-content:space-between;font-size:11px;padding:1px 0;"><span>'+l.qty+'x '+l.nombre+'</span><span>'+fmt2(l.subtotal)+'€</span></div>';});
-  html+='</div>'+
-    '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:2px solid #000;margin-top:6px;padding-top:4px;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
-    '<p style="text-align:center;font-size:10px;color:#666;margin-top:8px;">Gracias por su visita</p>';
-  const fullHtml='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:monospace;font-size:12px;width:72mm;margin:0;padding:8px;}@media print{body{margin:0;}}</style></head><body>'+html+'</body></html>';
-  const blob=new Blob([fullHtml],{type:'text/html'});
-  const url=URL.createObjectURL(blob);
-  const w=window.open(url,'_blank','width=400,height=600');
-  if(w){
-    w.onload=function(){
-      setTimeout(function(){w.print();URL.revokeObjectURL(url);},200);
-    };
-  } else {
-    // Fallback si popups bloqueados: iframe
-    let iframe=document.getElementById('print-iframe');
-    if(!iframe){iframe=document.createElement('iframe');iframe.id='print-iframe';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:320px;height:500px;border:none;';document.body.appendChild(iframe);}
-    iframe.src=url;
-    iframe.onload=function(){
-      setTimeout(function(){iframe.contentWindow.print();URL.revokeObjectURL(url);},300);
-    };
+  try {
+    const lineas=JSON.parse(n.lineas||'[]');
+    const d=new Date(n.created_at||Date.now());
+    const fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const turnoLabel={comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-';
+    let lineasHtml='';
+    lineas.forEach(function(l){
+      lineasHtml+='<tr><td>'+l.qty+'x '+l.nombre+'</td><td style="text-align:right">'+fmt2(l.subtotal)+'€</td></tr>';
+    });
+    const html='<html><head><meta charset="UTF-8"><style>'+
+      'body{font-family:monospace;font-size:13px;width:280px;margin:0 auto;padding:10px;}'+
+      'h3{text-align:center;margin:0 0 4px;font-size:15px;}'+
+      'p{margin:2px 0;font-size:12px;}'+
+      'table{width:100%;border-collapse:collapse;margin:8px 0;}'+
+      'td{padding:2px 0;font-size:12px;}'+
+      '.total{font-size:15px;font-weight:bold;border-top:2px solid #000;padding-top:4px;}'+
+      '.center{text-align:center;}'+
+      '</style></head><body>'+
+      '<h3>'+CLUB_HEADER+'</h3>'+
+      '<p class="center" style="color:#666;font-size:11px;">'+CLUB_DIR+'</p>'+
+      '<p>Socio: Nº '+parseInt(n.socio_num)+' - '+sN(n.socio_num)+'</p>'+
+      '<p>Fecha: '+fecha+'</p>'+
+      '<p>Turno: '+turnoLabel+' · '+n.comensales+' pers.'+(n.mesa?' · '+n.mesa:'')+'</p>'+
+      '<table>'+lineasHtml+'</table>'+
+      (n.propina>0?'<p>Propina: '+fmt2(n.propina)+'€</p>':'')+
+      '<p class="total">TOTAL: '+fmt2(n.total)+'€</p>'+
+      '<p style="color:#666;font-size:11px;text-align:center;margin-top:8px;">Forma de pago: '+(n.forma_pago||'efectivo')+'</p>'+
+      '</body></html>';
+
+    // Inject hidden div and use CSS print
+    let printDiv = document.getElementById('print-div');
+    if(!printDiv){
+      printDiv = document.createElement('div');
+      printDiv.id = 'print-div';
+      document.body.appendChild(printDiv);
+      const style = document.createElement('style');
+      style.id = 'print-style';
+      style.textContent = '@media print { body > *:not(#print-div){ display:none !important; } #print-div{ display:block !important; } } #print-div{ display:none; }';
+      document.head.appendChild(style);
+    }
+    printDiv.innerHTML = html;
+    printDiv.style.display = 'block';
+    setTimeout(function(){
+      window.print();
+      setTimeout(function(){ printDiv.style.display='none'; }, 1000);
+    }, 100);
+  } catch(err) {
+    console.error('Print error:', err);
+    alert('Error al imprimir: '+err.message);
   }
 }
-
 function reimprimirNota(idx){
   const mias=notas.filter(function(n){return n.socio_num===cu;});
   const n=mias[parseInt(idx)];
