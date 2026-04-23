@@ -297,7 +297,7 @@
   /* Admin */
   .admin-filters{display:flex;gap:.45rem;margin-bottom:.9rem;flex-wrap:wrap;}
   .filter-chip{padding:.38rem .8rem;border:1px solid var(--border);border-radius:20px;font-size:.73rem;cursor:pointer;background:var(--surface);color:var(--text-muted);transition:all .2s;}
-  .filter-chip.active{background:var(--dark);border-color:var(--dark);color:var(--gold);}
+  .filter-chip.active{background:var(--dark);border-color:var(--dark);color:#FFFFFF;}
   .admin-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.55rem;margin-bottom:1rem;}
   .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.7rem;text-align:center;}
   .stat-num{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--dark);}
@@ -483,10 +483,23 @@
         </div>
       </div>
       <div id="fecha-picker" style="display:none;margin-bottom:.75rem;">
-        <input type="date" id="admin-fecha-input" 
-          style="width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;background:#fff;transition:border-color .2s;"
-          onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"
-          onchange="renderAdmin()">
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <div style="flex:1;">
+            <label style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.3rem;">Desde</label>
+            <input type="date" id="admin-fecha-desde"
+              style="width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;background:#fff;transition:border-color .2s;"
+              onfocus="this.style.borderColor='var(--blue-mid)'" onblur="this.style.borderColor='var(--border)'"
+              onchange="renderAdmin()">
+          </div>
+          <div style="color:var(--text-muted);padding-top:1.4rem;">→</div>
+          <div style="flex:1;">
+            <label style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.3rem;">Hasta</label>
+            <input type="date" id="admin-fecha-hasta"
+              style="width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;background:#fff;transition:border-color .2s;"
+              onfocus="this.style.borderColor='var(--blue-mid)'" onblur="this.style.borderColor='var(--border)'"
+              onchange="renderAdmin()">
+          </div>
+        </div>
       </div>
       <div id="admin-list"></div>
     </div>
@@ -928,9 +941,16 @@ function setAdminFilter(f,el){
 }
 
 function renderAdmin(){
-  const fechaVal=document.getElementById('admin-fecha-input')?document.getElementById('admin-fecha-input').value:'';
-  let base=adminFechaFilter==='fecha'&&fechaVal
-    ? notas.filter(n=>n.created_at&&n.created_at.slice(0,10)===fechaVal)
+  const fechaDesde=document.getElementById('admin-fecha-desde')?document.getElementById('admin-fecha-desde').value:'';
+  const fechaHasta=document.getElementById('admin-fecha-hasta')?document.getElementById('admin-fecha-hasta').value:'';
+  let base=adminFechaFilter==='fecha'&&(fechaDesde||fechaHasta)
+    ? notas.filter(n=>{
+        if(!n.created_at) return false;
+        const d=n.created_at.slice(0,10);
+        if(fechaDesde&&d<fechaDesde) return false;
+        if(fechaHasta&&d>fechaHasta) return false;
+        return true;
+      })
     : notas;
   const filt=adminFilter==='todos'?base:base.filter(n=>n.forma_pago===adminFilter);
   const totalSum=filt.reduce((a,n)=>a+n.total,0);
@@ -1199,7 +1219,10 @@ function setFechaFilter(f,el){
   document.querySelectorAll('#filter-todas,#filter-fecha').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('fecha-picker').style.display=f==='fecha'?'block':'none';
-  if(f==='todas') document.getElementById('admin-fecha-input').value='';
+  if(f==='todas'){
+    if(document.getElementById('admin-fecha-desde')) document.getElementById('admin-fecha-desde').value='';
+    if(document.getElementById('admin-fecha-hasta')) document.getElementById('admin-fecha-hasta').value='';
+  }
   renderAdmin();
 }
 
