@@ -326,6 +326,10 @@
   .toast.show{transform:translateX(-50%) translateY(0);}
 
 
+
+  .mesa-btn{padding:.28rem .55rem;background:rgba(74,127,212,.25);border:1.5px solid rgba(74,127,212,.6);border-radius:7px;color:#FFFFFF;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .15s;min-width:30px;}
+  .mesa-btn:hover{background:rgba(74,127,212,.25);color:#fff;}
+  .mesa-btn.active{background:#1A3A6B;border-color:#A8C8F0;color:#FFFFFF;}
 </style>
 </head>
 <body>
@@ -367,6 +371,16 @@
     </div>
     <!-- Comensales + Turno centrado debajo del header -->
     <div id="tpv-header-bar" style="display:none;">
+      <div class="tpv-bar-group">
+        <span class="tpv-bar-label">Mesa</span>
+        <div id="mesa-btns" style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button class="mesa-btn" onclick="toggleMesa('1',this)">1</button>
+          <button class="mesa-btn" onclick="toggleMesa('2',this)">2</button>
+          <button class="mesa-btn" onclick="toggleMesa('3',this)">3</button>
+          <button class="mesa-btn" onclick="toggleMesa('4',this)">4</button>
+          <button class="mesa-btn" onclick="toggleMesa('Ext',this)">Ext</button>
+        </div>
+      </div>
       <div class="tpv-bar-group">
         <span class="tpv-bar-label">Comensales</span>
         <button class="qty-btn" onclick="changeCom(-1)">−</button>
@@ -637,7 +651,7 @@ async function loadCarta(){
 }
 
 // ── ESTADO ───────────────────────────────────────────────────
-let cu=null, cantidades={}, propinaAmt=0, formaPago='efectivo', notas=[], adminFilter='todos', numComensales=1, turnoActual='comida';
+let cu=null, cantidades={}, propinaAmt=0, formaPago='efectivo', notas=[], adminFilter='todos', numComensales=1, turnoActual='comida', mesaActual='', mesasSeleccionadas=[];
 
 function sN(id){const s=SOCIOS[id];return s?s.nombre+' '+s.apellidos:'';}
 function isAdmin(){return SOCIOS[cu]?.admin;}
@@ -770,7 +784,15 @@ function updateTotal(){
 }
 
 // ── PAGO ─────────────────────────────────────────────────────
+function toggleMesa(num,btn){
+  const idx=mesasSeleccionadas.indexOf(num);
+  if(idx>=0){mesasSeleccionadas.splice(idx,1);btn.classList.remove('active');}
+  else{mesasSeleccionadas.push(num);btn.classList.add('active');}
+  mesaActual=mesasSeleccionadas.length?'Mesa '+mesasSeleccionadas.join('+'):'';
+}
+
 function openPago(){
+  if(!mesaActual){alert('Por favor selecciona la mesa antes de pagar.');return;}
   const subtotal=calcTotal();
   if(subtotal===0)return;
   propinaAmt=0;formaPago='efectivo';
@@ -834,7 +856,7 @@ function renderTicket(){
   const fechaStr=now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
   document.getElementById('ticket-fecha').textContent=fechaStr;
   document.getElementById('ticket-socio').textContent='Socio nº '+parseInt(cu)+' · '+sN(cu);
-  document.getElementById('ticket-turno').textContent={comida:'🍽️ Comida',merienda:'☕ Merienda',cena:'🌙 Cena'}[turnoActual]+' · '+numComensales+' comensal'+(numComensales>1?'es':'');
+  document.getElementById('ticket-turno').textContent={comida:'🍽️ Comida',merienda:'☕ Merienda',cena:'🌙 Cena'}[turnoActual]+' · '+numComensales+' comensal'+(numComensales>1?'es':'')+(mesaActual?' · '+mesaActual:'');
   let lineas='';
   let subtotal=0;
   CARTA.forEach(function(cat){cat.items.forEach(function(item){
@@ -871,6 +893,7 @@ async function confirmarPago(){
     forma_pago:formaPago,
     turno:turnoActual,
     comensales:numComensales,
+    mesa:mesaActual,
     lineas:JSON.stringify(lineas),
   };
   const saved=await saveNota(nota);
@@ -881,6 +904,8 @@ async function confirmarPago(){
   // Reset
   closePago();
   cantidades={};
+  mesaActual='';mesasSeleccionadas=[];
+  document.querySelectorAll('.mesa-btn').forEach(b=>b.classList.remove('active'));
   renderCarta();
   if(esTPV()){ renderNotaTPV(); updateTotalTPV(); if(catSeleccionada) selectCatTPV(catSeleccionada); }
   showToast('✓ Nota guardada correctamente');
@@ -1387,6 +1412,7 @@ function buildESCPOS(n){
     fecha,
     'Turno: '+({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-'),
     'Pers: '+String(n.comensales||1),
+    ...(n.mesa?['Mesa: '+String(n.mesa)]:[]),
     'Pago: '+({efectivo:'Efectivo',tarjeta:'Tarjeta'}[n.forma_pago]||'-'),
     tLine(W),
     ...lineas.map(function(l){
