@@ -880,6 +880,7 @@ function renderTicket(){
 
 async function confirmarPago(){
   console.log("confirmarPago called, mesaActual:", mesaActual, "formaPago:", formaPago);
+  showToast("⏳ Guardando nota...");
   const subtotal=calcTotal();
   const propAmt=propinaAmt;
   const total=subtotal+propAmt;
@@ -901,9 +902,11 @@ async function confirmarPago(){
     lineas:JSON.stringify(lineas),
   };
   const saved=await saveNota(nota);
-  if(!saved)return;
+  if(!saved){showToast("❌ Error al guardar. Comprueba conexión.");return;}
+  showToast("✓ Nota guardada, preparando impresión...");
   notas.unshift(saved);
   // Imprimir ticket por impresora térmica
+  showToast("🖨️ Imprimiendo...");
   await imprimirTicketESCPOS(saved);
   // Reset
   closePago();
