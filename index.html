@@ -735,7 +735,15 @@ async function loadNotas(){
 }
 async function saveNota(nota){
   const {data,error}=await sb.from('notas_gasto').insert([nota]).select();
-  if(error){console.error(error);showToast('Error al guardar la nota');return null;}
+  if(error){
+    alert('Error al guardar: '+error.message+'\n\nInténtalo de nuevo o contacta al administrador.');
+    // Retry without mesa field in case column doesn't exist in DB
+    const notaSinMesa={...nota};
+    delete notaSinMesa.mesa;
+    const {data:d2,error:e2}=await sb.from('notas_gasto').insert([notaSinMesa]).select();
+    if(e2){alert('Error persistente: '+e2.message);return null;}
+    return d2[0];
+  }
   return data[0];
 }
 
