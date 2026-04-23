@@ -291,7 +291,7 @@
   .pago-btn.active{border-color:var(--gold);background:rgba(201,168,76,.08);color:var(--dark);font-weight:500;}
 
   .modal-actions{display:flex;gap:.7rem;margin-top:.5rem;}
-  .btn-confirm{flex:1;padding:.88rem;background:var(--gold);color:var(--dark);border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;}
+  .btn-confirm{flex:1;padding:.88rem;background:#1A3A6B;color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;}
   .btn-back{padding:.88rem 1.2rem;background:none;border:1px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.92rem;cursor:pointer;color:var(--text-muted);}
 
   /* Admin */
@@ -1549,9 +1549,23 @@ function _fallbackPrint(n){
   html+='</div>'+
     '<div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;border-top:2px solid #000;margin-top:6px;padding-top:4px;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
     '<p style="text-align:center;font-size:10px;color:#666;margin-top:8px;">Gracias por su visita</p>';
-  let iframe=document.getElementById('print-iframe');
-  if(!iframe){iframe=document.createElement('iframe');iframe.id='print-iframe';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:0;height:0;border:none;';document.body.appendChild(iframe);}
-  iframe.srcdoc='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:monospace;font-size:12px;width:72mm;margin:0;padding:8px;}</style></head><body>'+html+'<scr'+'ipt>window.onload=function(){window.print();}<\/scr'+'ipt></body></html>';
+  const fullHtml='<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:monospace;font-size:12px;width:72mm;margin:0;padding:8px;}@media print{body{margin:0;}}</style></head><body>'+html+'</body></html>';
+  const blob=new Blob([fullHtml],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const w=window.open(url,'_blank','width=400,height=600');
+  if(w){
+    w.onload=function(){
+      setTimeout(function(){w.print();URL.revokeObjectURL(url);},200);
+    };
+  } else {
+    // Fallback si popups bloqueados: iframe
+    let iframe=document.getElementById('print-iframe');
+    if(!iframe){iframe=document.createElement('iframe');iframe.id='print-iframe';iframe.style.cssText='position:fixed;top:-9999px;left:-9999px;width:320px;height:500px;border:none;';document.body.appendChild(iframe);}
+    iframe.src=url;
+    iframe.onload=function(){
+      setTimeout(function(){iframe.contentWindow.print();URL.revokeObjectURL(url);},300);
+    };
+  }
 }
 
 function reimprimirNota(idx){
