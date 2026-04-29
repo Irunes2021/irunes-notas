@@ -351,7 +351,7 @@
           autocomplete="off" inputmode="numeric">
       </div>
       <div class="field-group">
-        <label>DNI (sin letra)</label>
+        <label>DNI sin letra</label>
         <input type="tel" id="login-pass" placeholder="Ej: 12345678"
           autocomplete="off" inputmode="numeric" pattern="[0-9]*">
         <div class="error-msg" id="login-error">Número de socio o DNI incorrecto</div>
@@ -856,7 +856,7 @@ function setPago(tipo){
 
 function renderTicket(){
   const now=new Date();
-  const fechaStr=now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const fechaStr=now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Europe/Madrid'})+' '+now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
   document.getElementById('ticket-fecha').textContent=fechaStr;
   document.getElementById('ticket-socio').textContent='Socio nº '+parseInt(cu)+' · '+sN(cu);
   document.getElementById('ticket-turno').textContent={comida:'🍽️ Comida',merienda:'☕ Merienda',cena:'🌙 Cena'}[turnoActual]+' · '+numComensales+' comensal'+(numComensales>1?'es':'')+(mesaActual?' · '+mesaActual:'');
@@ -922,7 +922,7 @@ function renderHistorial(){
   if(!mias.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>No tienes notas registradas.</p></div>';return;}
   list.innerHTML=mias.map((n,idx)=>{
     const d=new Date(n.created_at);
-    const fechaStr=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const fechaStr=d.toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
     const lineas=JSON.parse(n.lineas||'[]');
     const detalleHtml=lineas.map(l=>
       '<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.2rem 0;border-bottom:1px solid var(--border);">'+
@@ -994,7 +994,7 @@ function renderAdmin(){
   if(!filt.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">🧾</div><p>No hay notas registradas.</p></div>';return;}
   list.innerHTML=filt.map(function(n,idx){
     const d=new Date(n.created_at);
-    const fechaStr=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const fechaStr=d.toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
     const lineas=JSON.parse(n.lineas||'[]');
     let detalleHtml='';
     lineas.forEach(function(l){
@@ -1410,7 +1410,7 @@ function textToBytes(str){
 
 function buildESCPOS(n){
   const d=new Date(n.created_at||Date.now());
-  const fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const fecha=d.toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
   const lineas=JSON.parse(n.lineas||'[]');
   const W=PAPER_COLS;
   const rows=[
@@ -1543,7 +1543,7 @@ function _fallbackPrint(n){
   try {
     const lineas=JSON.parse(n.lineas||'[]');
     const d=new Date(n.created_at||Date.now());
-    const fecha=d.toLocaleDateString('es-ES')+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const fecha=d.toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
     const turnoLabel={comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-';
     let lineasHtml='';
     lineas.forEach(function(l){
