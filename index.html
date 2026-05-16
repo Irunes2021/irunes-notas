@@ -394,12 +394,12 @@
     <div class="tpv-bar-group">
       <span class="tpv-bar-label" style="color:#A8C8F0;">Comensales</span>
       <button class="qty-btn" onclick="changeCom(-1)" style="width:34px;height:34px;border:1.5px solid rgba(74,127,212,.5);background:rgba(255,255,255,.08);border-radius:8px;cursor:pointer;color:#fff;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">−</button>
-      <span id="com-num-tpv" style="font-family:'Playfair Display',serif;font-size:1.4rem;color:#fff;min-width:1.8rem;text-align:center;">1</span>
+      <span id="com-num-tpv" style="font-family:'Playfair Display',serif;font-size:1.4rem;color:#fff;min-width:1.8rem;text-align:center;">0</span>
       <button class="qty-btn" onclick="changeCom(1)" style="width:34px;height:34px;border:1.5px solid rgba(74,127,212,.5);background:rgba(255,255,255,.08);border-radius:8px;cursor:pointer;color:#fff;font-size:1.1rem;display:flex;align-items:center;justify-content:center;">+</button>
     </div>
     <div class="tpv-bar-group">
       <span class="tpv-bar-label" style="color:#A8C8F0;">Turno</span>
-      <button class="tpv-turno-btn active" id="turno-comida-tpv" onclick="setTurnoTPV('comida',this)">🍽️ Comida</button>
+      <button class="tpv-turno-btn" id="turno-comida-tpv" onclick="setTurnoTPV('comida',this)">🍽️ Comida</button>
       <button class="tpv-turno-btn" id="turno-merienda-tpv" onclick="setTurnoTPV('merienda',this)">☕ Merienda</button>
       <button class="tpv-turno-btn" id="turno-cena-tpv" onclick="setTurnoTPV('cena',this)">🌙 Cena</button>
     </div>
@@ -450,14 +450,14 @@
           <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-muted);margin-bottom:.4rem;">Nº Comensales</div>
           <div style="display:flex;align-items:center;gap:.6rem;">
             <button class="qty-btn" onclick="changeCom(-1)" style="width:32px;height:32px;">−</button>
-            <span id="com-num" style="font-family:'Playfair Display',serif;font-size:1.3rem;min-width:1.5rem;text-align:center;">1</span>
+            <span id="com-num" style="font-family:'Playfair Display',serif;font-size:1.3rem;min-width:1.5rem;text-align:center;">0</span>
             <button class="qty-btn" onclick="changeCom(1)" style="width:32px;height:32px;">+</button>
           </div>
         </div>
         <div style="flex:2;">
           <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:var(--text-muted);margin-bottom:.4rem;">Turno</div>
           <div style="display:flex;gap:.4rem;">
-            <button class="propina-btn active" id="turno-comida" onclick="setTurno('comida',this)" style="font-size:.75rem;padding:.4rem .5rem;">🍽️ Comida</button>
+            <button class="propina-btn" id="turno-comida" onclick="setTurno('comida',this)" style="font-size:.75rem;padding:.4rem .5rem;">🍽️ Comida</button>
             <button class="propina-btn" id="turno-merienda" onclick="setTurno('merienda',this)" style="font-size:.75rem;padding:.4rem .5rem;">☕ Merienda</button>
             <button class="propina-btn" id="turno-cena" onclick="setTurno('cena',this)" style="font-size:.75rem;padding:.4rem .5rem;">🌙 Cena</button>
           </div>
@@ -654,7 +654,7 @@ async function loadCarta(){
 }
 
 // ── ESTADO ───────────────────────────────────────────────────
-let cu=null, cantidades={}, propinaAmt=0, formaPago='efectivo', notas=[], adminFilter='todos', numComensales=1, turnoActual='comida', mesaActual='', mesasSeleccionadas=[];
+let cu=null, cantidades={}, propinaAmt=0, formaPago='efectivo', notas=[], adminFilter='todos', numComensales=0, turnoActual='', mesaActual='', mesasSeleccionadas=[];
 
 function sN(id){const s=SOCIOS[id];return s?s.nombre+' '+s.apellidos:'';}
 function isAdmin(){return SOCIOS[cu]?.admin;}
@@ -782,7 +782,7 @@ function changeQty(key,dir,precio){
 function updateTotal(){
   const total=calcTotal();
   document.getElementById('total-display').textContent=fmt2(total)+' €';
-  document.getElementById('btn-pagar').disabled=total===0;
+  document.getElementById('btn-pagar').disabled = total===0 || numComensales===0 || turnoActual==='';
   if(esTPV()) updateTotalTPV();
 }
 
@@ -796,6 +796,8 @@ function toggleMesa(num,btn){
 
 function openPago(){
   if(!mesaActual){alert('Por favor selecciona la mesa antes de pagar.');return;}
+  if(numComensales===0){alert('Por favor indica el número de comensales.');return;}
+  if(!turnoActual){alert('Por favor selecciona el turno.');return;}
   const subtotal=calcTotal();
   if(subtotal===0)return;
   propinaAmt=0;formaPago='efectivo';
@@ -815,16 +817,17 @@ function setTurno(t,el){
   turnoActual=t;
   document.querySelectorAll('[id^="turno-"]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
-  // Update cocina prices based on turno
   updateCocinaPrice();
+  updateTotal();
 }
 function changeCom(d){
-  numComensales=Math.max(1,numComensales+d);
+  numComensales=Math.max(0,numComensales+d);
   const elM=document.getElementById('com-num');
   const elT=document.getElementById('com-num-tpv');
   if(elM) elM.textContent=numComensales;
   if(elT) elT.textContent=numComensales;
   updateCocinaPrice();
+  updateTotal(); // re-evalúa si el botón Pagar debe estar activo
 }
 function updateCocinaPrice(){
   const turnoKeys={comida:'comida',merienda:'merienda',cena:'cena'};
@@ -1266,7 +1269,7 @@ function initTPV(){
   document.getElementById('tpv-header-bar').style.display='flex';
   document.getElementById('tpv-cols').style.display='flex';
   document.getElementById('movil-carta').style.display='none';
-  setTurnoTPV(turnoActual, document.getElementById('turno-'+turnoActual+'-tpv'));
+  // No forzar turno: el socio debe elegirlo
   renderCatsTPV();
 }
 
@@ -1361,6 +1364,7 @@ function setTurnoTPV(t, el){
   });
   updateCocinaPrice();
   renderNotaTPV();
+  updateTotalTPV();
 }
 
 function updateTotalTPV(){
@@ -1368,7 +1372,7 @@ function updateTotalTPV(){
   const el = document.getElementById('tpv-total-display');
   const btn = document.getElementById('btn-pagar-tpv');
   if(el) el.textContent = fmt2(total)+' €';
-  if(btn) btn.disabled = total===0;
+  if(btn) btn.disabled = total===0 || numComensales===0 || turnoActual==='';
 }
 
 // ── FIN TPV ──────────────────────────────────────────────────
