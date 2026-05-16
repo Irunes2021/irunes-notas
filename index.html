@@ -964,6 +964,7 @@ function renderHistorial(){
         detalleHtml+
         (n.propina>0?'<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.3rem 0;color:var(--text-muted);"><span>Propina</span><span>'+fmt2(n.propina)+'€</span></div>':'')+
         '<div style="display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;padding:.4rem 0;border-top:2px solid var(--dark);margin-top:.2rem;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
+        '<div style="margin-top:.6rem;padding:.55rem .7rem;border-top:1px dashed var(--border);text-align:center;font-size:.72rem;color:var(--text-muted);line-height:1.6;">Introduce esta nota con el justificante de pago<br>ó dinero en metálico en el <strong>sobre Azul</strong>. Gracias</div>'+
         '<button data-idx="'+idx+'" onclick="reimprimirNota(this.dataset.idx)" style="width:100%;margin-top:.6rem;padding:.5rem;background:none;border:1px solid var(--border);border-radius:9px;font-family:\'DM Sans\',sans-serif;font-size:.78rem;cursor:pointer;color:var(--brown);">🖨️ Reimprimir ticket</button>'+
       '</div>'+
     '</div>';
@@ -1039,6 +1040,7 @@ function renderAdmin(){
         detalleHtml+
         (n.propina>0?'<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:.3rem 0;color:var(--text-muted);"><span>Propina</span><span>'+fmt2(n.propina)+'€</span></div>':'')+
         '<div style="display:flex;justify-content:space-between;font-size:.88rem;font-weight:600;padding:.4rem 0;border-top:2px solid var(--dark);margin-top:.2rem;"><span>TOTAL</span><span>'+fmt2(n.total)+'€</span></div>'+
+        '<div style="margin-top:.6rem;padding:.55rem .7rem;border-top:1px dashed var(--border);text-align:center;font-size:.72rem;color:var(--text-muted);line-height:1.6;">Introduce esta nota con el justificante de pago<br>ó dinero en metálico en el <strong>sobre Azul</strong>. Gracias</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -1588,6 +1590,8 @@ function _fallbackPrint(n){
       (n.propina>0?'<p>Propina: '+fmt2(n.propina)+'€</p>':'')+
       '<p class="total">TOTAL: '+fmt2(n.total)+'€</p>'+
       '<p style="color:#666;font-size:11px;text-align:center;margin-top:8px;">Forma de pago: '+(n.forma_pago||'efectivo')+'</p>'+
+      '<hr style="border:none;border-top:1px dashed #999;margin:10px 0;">'+
+      '<p style="font-size:11px;text-align:center;line-height:1.6;">Introduce esta nota con el justificante de pago<br>ó dinero en metálico en el <strong>sobre Azul</strong>.<br>Gracias</p>'+
       '</body></html>';
 
     // Inject hidden div and use CSS print
