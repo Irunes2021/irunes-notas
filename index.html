@@ -263,7 +263,7 @@
   .nota-socio{font-size:.78rem;font-weight:500;margin-bottom:.2rem;}
 
   /* PAGO MODAL */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:none;align-items:flex-end;backdrop-filter:blur(4px);}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1100;display:none;align-items:flex-end;backdrop-filter:blur(4px);}
   .modal-overlay.show{display:flex;}
   .modal-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:1.5rem 1.5rem 2.5rem;width:100%;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);max-height:92vh;overflow-y:auto;}
   @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -322,7 +322,7 @@
   .empty-state .empty-icon{font-size:2.5rem;margin-bottom:.75rem;}
   .empty-state p{font-size:.83rem;line-height:1.6;}
   .btn-inicio{background:var(--blue-mid);color:#fff;border:none;border-radius:12px;padding:.7rem 2.2rem;font-family:'DM Sans',sans-serif;font-size:1.05rem;font-weight:700;cursor:pointer;z-index:200;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.3);white-space:nowrap;}
-  .toast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dark);color:var(--gold);padding:.7rem 1.4rem;border-radius:100px;font-size:.83rem;font-weight:500;border:1px solid rgba(201,168,76,.3);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:1000;white-space:nowrap;}
+  .toast{position:fixed;bottom:6rem;left:50%;transform:translateX(-50%) translateY(100px);background:var(--dark);color:var(--gold);padding:.7rem 1.4rem;border-radius:100px;font-size:.83rem;font-weight:500;border:1px solid rgba(201,168,76,.3);transition:transform .3s cubic-bezier(.34,1.56,.64,1);z-index:1000;white-space:nowrap;pointer-events:none;}
   .toast.show{transform:translateX(-50%) translateY(0);}
 
 
@@ -787,7 +787,7 @@ function changeQty(key,dir,precio){
 function updateTotal(){
   const total=calcTotal();
   document.getElementById('total-display').textContent=fmt2(total)+' €';
-  document.getElementById('btn-pagar').disabled = total===0 || numComensales===0 || turnoActual==='';
+  document.getElementById('btn-pagar').disabled = total===0;
   if(esTPV()) updateTotalTPV();
 }
 
@@ -800,15 +800,24 @@ function toggleMesa(num,btn){
 }
 
 function openPago(){
-  if(!mesaActual){alert('Por favor selecciona la mesa antes de pagar.');return;}
-  if(numComensales===0){alert('Por favor indica el número de comensales.');return;}
-  if(!turnoActual){alert('Por favor selecciona el turno.');return;}
+  // Recoger todos los errores a la vez
+  const errores=[];
+  if(!mesaActual) errores.push('mesa');
+  if(numComensales===0) errores.push('comensales');
+  if(!turnoActual) errores.push('turno');
+  if(errores.length>0){
+    const msgs={mesa:'selecciona la mesa',comensales:'indica los comensales',turno:'selecciona el turno'};
+    showToast('⚠️ Falta: '+errores.map(e=>msgs[e]).join(' · '),'error');
+    return;
+  }
   const subtotal=calcTotal();
   if(subtotal===0)return;
   propinaAmt=0;formaPago='efectivo';
   document.getElementById('propina-custom').value='';
   document.getElementById('btn-efectivo').classList.add('active');
   document.getElementById('btn-tarjeta').classList.remove('active');
+  // Limpiar toast antes de abrir el modal
+  hideToast();
   renderTicket();
   document.getElementById('pago-modal').classList.add('show');
 }
@@ -832,7 +841,6 @@ function changeCom(d){
   if(elM) elM.textContent=numComensales;
   if(elT) elT.textContent=numComensales;
   updateCocinaPrice();
-  updateTotal(); // re-evalúa si el botón Pagar debe estar activo
 }
 function updateCocinaPrice(){
   const turnoKeys={comida:'comida',merienda:'merienda',cena:'cena'};
@@ -1377,7 +1385,7 @@ function updateTotalTPV(){
   const el = document.getElementById('tpv-total-display');
   const btn = document.getElementById('btn-pagar-tpv');
   if(el) el.textContent = fmt2(total)+' €';
-  if(btn) btn.disabled = total===0 || numComensales===0 || turnoActual==='';
+  if(btn) btn.disabled = total===0;
 }
 
 // ── FIN TPV ──────────────────────────────────────────────────
@@ -1610,10 +1618,29 @@ function reimprimirNota(idx){
   if(n) imprimirTicketESCPOS(n);
 }
 
-function showToast(msg){
+let _toastTimer=null;
+function showToast(msg, tipo){
   const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
+  t.textContent=msg;
+  if(tipo==='error'){
+    t.style.background='#C0392B';
+    t.style.color='#fff';
+    t.style.borderColor='rgba(255,255,255,.2)';
+  } else {
+    t.style.background='';
+    t.style.color='';
+    t.style.borderColor='';
+  }
+  t.classList.add('show');
+  if(_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>{ t.classList.remove('show'); _toastTimer=null; },2800);
+}
+function hideToast(){
+  if(_toastTimer){ clearTimeout(_toastTimer); _toastTimer=null; }
+  const t=document.getElementById('toast');
+  t.classList.remove('show');
+  t.style.display='none';
+  setTimeout(()=>{ t.style.display=''; }, 50);
 }
 </script>
 </body>
