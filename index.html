@@ -597,6 +597,11 @@
       <div class="ticket-line total">
         <span>TOTAL</span><span id="ticket-total"></span>
       </div>
+      <div style="margin-top:.75rem;padding-top:.65rem;border-top:1px dashed #ccc;text-align:center;font-size:.7rem;color:#555;line-height:1.6;">
+        Introduce esta nota con el justificante de pago<br>
+        ó dinero en metálico en el sobre Azul.<br>
+        <strong>Gracias</strong>
+      </div>
     </div>
 
     <!-- Propina -->
@@ -1438,7 +1443,11 @@ function buildESCPOS(n){
   if(n.propina>0) rows.push('Propina: '+fmt2(n.propina)+' EUR');
   rows.push('TOTAL: '+fmt2(n.total)+' EUR');
   rows.push(tLine(W));
-  rows.push('Gracias por su visita');
+  rows.push('Introduce esta nota con el');
+  rows.push('justificante de pago o dinero');
+  rows.push('en metalico en el sobre Azul.');
+  rows.push('');
+  rows.push('Gracias');
   const text=rows.join('\n');
 
   // Solo reset + avance + corte, sin cambiar fuente
