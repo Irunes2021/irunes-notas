@@ -1469,6 +1469,55 @@ function buildESCPOS(n){
   return [{type:'raw',format:'base64',data:toBase64(allBytes)}];
 }
 
+
+const QZ_CERT = `-----BEGIN CERTIFICATE-----
+MIIDGzCCAgOgAwIBAgIUCNjJL5NjMQrh9u0YEBiUlhwa0TwwDQYJKoZIhvcNAQEL
+BQAwHTEbMBkGA1UEAwwSbm90YXMuY2NpcnVuZXMuY29tMB4XDTI2MDYxOTIxMjE0
+N1oXDTM2MDYxNjIxMjE0N1owHTEbMBkGA1UEAwwSbm90YXMuY2NpcnVuZXMuY29t
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4O+VFqVOvXemspbfqaoh
+cyjDKYqGS8vfgbfivbMXcaC0B7szMnNtdH+5To8X33k/1t8J+kRzE1X6YLirWLYf
+FYCOaYty99xbMmTH/AoUNFpUmzARuu8iXeanaACmgGOEjCo9uTlrOwfunlfxTLAB
+pY1ksxxbIdB/7Rb+mvdPP2YkvUuICEqVo06mUoG74oLx+fyc4vSls8+oXvtiKjo9
+om6Ff3N33vc+pSdVVdfJFTuO6NsPJRVupshH91dZKkoiYK3ORTFNYbXLqCw4cMYd
+GfdlkwhYaIJFp9yQFk15BDXTbQYLdYAz4vBQmLSy93QOXKAR451pZRkXxMWc/eBH
+BQIDAQABo1MwUTAdBgNVHQ4EFgQUQJaQLKK93c4GME6mqJ6j1ZrcI3AwHwYDVR0j
+BBgwFoAUQJaQLKK93c4GME6mqJ6j1ZrcI3AwDwYDVR0TAQH/BAUwAwEB/zANBgkq
+hkiG9w0BAQsFAAOCAQEAeBxwOdFwcn1f/WH9ux6/A8bxbIrFl15pSffLANeS9JYP
++gLPPOo7lPbADu1RehpevZRvCCgQATUF0JmGr6Hd21zp5o9pM8yBzJfXVyvFPO3q
+cZ8izwYnJR/xXb/yQVTckxejCgCR92+r3vZCFpi7CXXMGSFbtDZu+P0fXp4nn6PH
+PY9TwTno4NtTwAS2TKyLrGbfsiFAEXSmF7AEt+aOnU7z8HRBHVGBPdSpDvFepfnR
+oYNW+MU9OtLdLk4oFscyfHVuWVrsf+Cv89nKFoEPSr1WOvqZxRPD6sMHaS0ZU5CA
+fRx8uLwdeP7hnEAxmk8JwvXoO+4dRm2totXog+eIkQ==
+-----END CERTIFICATE-----`;
+const QZ_PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDg75UWpU69d6ay
+lt+pqiFzKMMpioZLy9+Bt+K9sxdxoLQHuzMyc210f7lOjxffeT/W3wn6RHMTVfpg
+uKtYth8VgI5pi3L33FsyZMf8ChQ0WlSbMBG67yJd5qdoAKaAY4SMKj25OWs7B+6e
+V/FMsAGljWSzHFsh0H/tFv6a908/ZiS9S4gISpWjTqZSgbvigvH5/Jzi9KWzz6he
++2IqOj2iboV/c3fe9z6lJ1VV18kVO47o2w8lFW6myEf3V1kqSiJgrc5FMU1htcuo
+LDhwxh0Z92WTCFhogkWn3JAWTXkENdNtBgt1gDPi8FCYtLL3dA5coBHjnWllGRfE
+xZz94EcFAgMBAAECggEAM+bUTd9i5dEAA+FQRoPdKAdV0PYHuuGV9waJKSBz3mIo
+aEhHrfJ4ZRM7nObjqUr+8gOQ99BnhSSnmz3BO7z6Oynosm3c31hXKq+afYuN0e6t
+6wkSbkHTejtIkXTk9mcAJJ9ykpSvK3XPF3ZPVVSfbKXNgI6gcJL9kaVmpjc+b/Ag
+zpitsILVODZO37lkgQMuCbu/Q6Z7FzYWOP3sfUgc+97yM8TgOR3qoBFP398JaLg9
+714niwdjeu6mGFLJWksBq5E/KvGdR62V8bBbYDsGe0tVh9lsvS8PSAlUWd5yWytT
+/mYcs76m7nHyKQbOMj8lrxtbM+qZbRHbM8DmKyv7AQKBgQD9Wf5v6aXijxx8CW2C
+yu9WlBn7D24Suhc+tFuudhBYsGKBnKhnzxX3iVTU9FKEuw7EaY7dZiCw1ndU+Yy6
+Wyn3zpz4EZ//98dZRqtQ6G7X/MZ6E2ItBf8hgIv8yytsF9zig71yyhY/QY0Rve1o
+BBbpr79ZwziatK0up6v+GltUJQKBgQDjSYtAqVETLxZQyAq0f1tIkON2MY20oq97
+3SMuYnRGl5RkzyMpSUz7+mfQ6LMwyVYngvyUL1CW58+61qMDE/yVC0urXi53nN98
+7Eg99kVY2QnEIroIvOHvhQ6dDuLeI1aNIvEfZI9kGyjuj5j0Uv1k5kiFwhpMEh0n
+AzsbhMhBYQKBgQCOBGF1WHMNsg1UlnBVze4mCTUbIAYi5z/afX2bKUF2hcFiSG+6
+aUI2FTyBd0e+caEQht93yiTvG/men5i8ahf3elFRWYfoE3wi1lN4MiLYXjDgA3eY
+J3Fh1U4jcbwwhpviOdj7vL6FzPgIBwBKu2ggrMzFw4I6bqdZrNHjyeCCJQKBgQCb
+bN9dCGv4wmpwM1uesriplur1GE3fCKEYAtDcF1eMLnu7tCpHQWjzpvj3Uym2YvgX
+bOtsKi7iAwN6sOwoXrKK+X51YaJFCXGK68k7Ff22FDUpetXcw819DXBA1r0tSt0V
+Bp/857dmrWwANxJRga7mINPXJDT3cCufUgZJezO2AQKBgQDHtYGe2zLMfEq4MAh7
+6s7E76cWOMJjmQ15V8ulptPgHZx+gfgaTRLy4iceYAu8iurVXENTipUzDAWs+NLi
+nba+UYaAayHcNCoqKwQD863+RNsLWk99h5aUqCcKJV6BMnxJFsdZPx42X36LWZsA
+AFqSEzWesGIsumKmZGTKiZVOpw==
+-----END PRIVATE KEY-----`;
+
 async function imprimirTicketESCPOS(n){
   if(typeof qz==='undefined'||!qz.websocket){
     _fallbackPrint(n);
@@ -1531,13 +1580,13 @@ pNKzmpBFLukdnpCrK1Mjd9SjS/7pXNK55KYkaRFd4NKDC7wl3SpFWFmUiDIMo3cm
 
   try{
     if(!qz.websocket.isActive()){
-      qz.security.setCertificatePromise(function(resolve){ resolve(CERT); });
+      qz.security.setCertificatePromise(function(resolve){ resolve(QZ_CERT); });
       qz.security.setSignatureAlgorithm('SHA512');
       qz.security.setSignaturePromise(function(toSign){
         return function(resolve, reject){
           try{
             const algo = { name:'RSASSA-PKCS1-v1_5', hash:{name:'SHA-512'} };
-            const keyData = PRIVATE_KEY.replace(/-----[^-]+-----/g,'').replace(/\s/g,'');
+            const keyData = QZ_PRIVATE_KEY.replace(/-----[^-]+-----/g,'').replace(/\s/g,'');
             const binaryKey = Uint8Array.from(atob(keyData), c=>c.charCodeAt(0));
             crypto.subtle.importKey('pkcs8', binaryKey.buffer, algo, false, ['sign'])
               .then(function(key){
