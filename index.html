@@ -497,6 +497,7 @@
         <div style="display:flex;gap:.4rem;align-items:center;">
           <button class="filter-chip active" id="filter-todas" onclick="setFechaFilter('todas',this)">Todas</button>
           <button class="filter-chip" id="filter-fecha" onclick="setFechaFilter('fecha',this)">📅 Por fecha</button>
+          <button onclick="exportarExcel()" style="background:#1A3A5C;color:#fff;border:none;border-radius:20px;padding:.38rem .85rem;font-size:.73rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;">⬇️ Excel</button>
         </div>
       </div>
       <div id="fecha-picker" style="display:none;margin-bottom:.75rem;">
@@ -985,6 +986,71 @@ function setAdminFilter(f,el){
   document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
   el.classList.add('active');
   renderAdmin();
+}
+
+function exportarExcel(){
+  // Obtener el mismo filtro que renderAdmin
+  const fechaDesde=document.getElementById('admin-fecha-desde')?document.getElementById('admin-fecha-desde').value:'';
+  const fechaHasta=document.getElementById('admin-fecha-hasta')?document.getElementById('admin-fecha-hasta').value:'';
+  let base=adminFechaFilter==='fecha'&&(fechaDesde||fechaHasta)
+    ? notas.filter(n=>{
+        if(!n.created_at) return false;
+        const d=n.created_at.slice(0,10);
+        if(fechaDesde&&d<fechaDesde) return false;
+        if(fechaHasta&&d>fechaHasta) return false;
+        return true;
+      })
+    : notas;
+  const filt=adminFilter==='todos'?base:base.filter(n=>n.forma_pago===adminFilter);
+  if(!filt.length){showToast('No hay notas para exportar','error');return;}
+
+  const TL={comida:'Comida',merienda:'Merienda',cena:'Cena'};
+  // Cabecera
+  const cols=['Fecha','Hora','Socio Nº','Nombre','Mesa','Turno','Comensales','Subtotal','Propina','Total','Forma de pago','Detalle'];
+  const rows=[cols];
+  filt.forEach(function(n){
+    const d=new Date(n.created_at);
+    const fecha=d.toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'});
+    const hora=d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
+    const lineas=JSON.parse(n.lineas||'[]');
+    const detalle=lineas.map(l=>l.qty+'x '+l.nombre).join(' | ');
+    const subtotal=fmt2(n.total - (n.propina||0));
+    rows.push([
+      fecha, hora,
+      parseInt(n.socio_num),
+      sN(n.socio_num),
+      n.mesa||'',
+      TL[n.turno]||n.turno||'',
+      n.comensales||'',
+      subtotal.replace('.',','),
+      fmt2(n.propina||0).replace('.',','),
+      fmt2(n.total).replace('.',','),
+      n.forma_pago==='efectivo'?'Efectivo':'Tarjeta',
+      detalle
+    ]);
+  });
+
+  // Totales al final
+  const totalSum=filt.reduce((a,n)=>a+n.total,0);
+  const efectivoSum=filt.filter(n=>n.forma_pago==='efectivo').reduce((a,n)=>a+n.total,0);
+  const tarjetaSum=filt.filter(n=>n.forma_pago==='tarjeta').reduce((a,n)=>a+n.total,0);
+  rows.push([]);
+  rows.push(['','','','','','','','','TOTAL',fmt2(totalSum).replace('.',','),'',filt.length+' notas']);
+  rows.push(['','','','','','','','','Efectivo',fmt2(efectivoSum).replace('.',','),'','']);
+  rows.push(['','','','','','','','','Tarjeta',fmt2(tarjetaSum).replace('.',','),'','']);
+
+  // Generar CSV con BOM (para que Excel abra bien los acentos)
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const desde=fechaDesde||'inicio';
+  const hasta=fechaHasta||'hoy';
+  a.href=url;
+  a.download='notas-ccirunes-'+desde+'-'+hasta+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Excel descargado · '+filt.length+' notas');
 }
 
 function renderAdmin(){
@@ -1476,53 +1542,60 @@ async function imprimirTicketESCPOS(n){
   }
 
   const CERT = `-----BEGIN CERTIFICATE-----
-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
+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
 -----END CERTIFICATE-----`;
-const PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
-MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDg75UWpU69d6ay
-lt+pqiFzKMMpioZLy9+Bt+K9sxdxoLQHuzMyc210f7lOjxffeT/W3wn6RHMTVfpg
-uKtYth8VgI5pi3L33FsyZMf8ChQ0WlSbMBG67yJd5qdoAKaAY4SMKj25OWs7B+6e
-V/FMsAGljWSzHFsh0H/tFv6a908/ZiS9S4gISpWjTqZSgbvigvH5/Jzi9KWzz6he
-+2IqOj2iboV/c3fe9z6lJ1VV18kVO47o2w8lFW6myEf3V1kqSiJgrc5FMU1htcuo
-LDhwxh0Z92WTCFhogkWn3JAWTXkENdNtBgt1gDPi8FCYtLL3dA5coBHjnWllGRfE
-xZz94EcFAgMBAAECggEAM+bUTd9i5dEAA+FQRoPdKAdV0PYHuuGV9waJKSBz3mIo
-aEhHrfJ4ZRM7nObjqUr+8gOQ99BnhSSnmz3BO7z6Oynosm3c31hXKq+afYuN0e6t
-6wkSbkHTejtIkXTk9mcAJJ9ykpSvK3XPF3ZPVVSfbKXNgI6gcJL9kaVmpjc+b/Ag
-zpitsILVODZO37lkgQMuCbu/Q6Z7FzYWOP3sfUgc+97yM8TgOR3qoBFP398JaLg9
-714niwdjeu6mGFLJWksBq5E/KvGdR62V8bBbYDsGe0tVh9lsvS8PSAlUWd5yWytT
-/mYcs76m7nHyKQbOMj8lrxtbM+qZbRHbM8DmKyv7AQKBgQD9Wf5v6aXijxx8CW2C
-yu9WlBn7D24Suhc+tFuudhBYsGKBnKhnzxX3iVTU9FKEuw7EaY7dZiCw1ndU+Yy6
-Wyn3zpz4EZ//98dZRqtQ6G7X/MZ6E2ItBf8hgIv8yytsF9zig71yyhY/QY0Rve1o
-BBbpr79ZwziatK0up6v+GltUJQKBgQDjSYtAqVETLxZQyAq0f1tIkON2MY20oq97
-3SMuYnRGl5RkzyMpSUz7+mfQ6LMwyVYngvyUL1CW58+61qMDE/yVC0urXi53nN98
-7Eg99kVY2QnEIroIvOHvhQ6dDuLeI1aNIvEfZI9kGyjuj5j0Uv1k5kiFwhpMEh0n
-AzsbhMhBYQKBgQCOBGF1WHMNsg1UlnBVze4mCTUbIAYi5z/afX2bKUF2hcFiSG+6
-aUI2FTyBd0e+caEQht93yiTvG/men5i8ahf3elFRWYfoE3wi1lN4MiLYXjDgA3eY
-J3Fh1U4jcbwwhpviOdj7vL6FzPgIBwBKu2ggrMzFw4I6bqdZrNHjyeCCJQKBgQCb
-bN9dCGv4wmpwM1uesriplur1GE3fCKEYAtDcF1eMLnu7tCpHQWjzpvj3Uym2YvgX
-bOtsKi7iAwN6sOwoXrKK+X51YaJFCXGK68k7Ff22FDUpetXcw819DXBA1r0tSt0V
-Bp/857dmrWwANxJRga7mINPXJDT3cCufUgZJezO2AQKBgQDHtYGe2zLMfEq4MAh7
-6s7E76cWOMJjmQ15V8ulptPgHZx+gfgaTRLy4iceYAu8iurVXENTipUzDAWs+NLi
-nba+UYaAayHcNCoqKwQD863+RNsLWk99h5aUqCcKJV6BMnxJFsdZPx42X36LWZsA
-AFqSEzWesGIsumKmZGTKiZVOpw==
+
+  const PRIVATE_KEY = `-----BEGIN PRIVATE KEY-----
+MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDPczKMOgNmep/Y
+RojgUa9ymvrVtKS3g56+fnYjGJq5YSoBQLzxEgTfutmR0BSswANiWQLhYZNHOqvZ
+O5mcI2k4s0st5V0RPZwaXu2P1cCQor3qXZ+0VFFcKIAvAZFDpOiiGuqVuJ7EjoyJ
+JEsc7fLJzQe18Xha7dMFqCESFMLYBdv2Vkha+Z+6vZ/vU36+278c2rvy1VwHrUh7
+BhZIeRguLzFxJ9O+MBNKeZkvQrzKI5jqMNzcThEjtMM3yyWqR6oKiWa5aov8f+yb
+kmJIWE90CbBKqcPpR9FNMrpSzbC/DsaOXE4DCDme5aAkUiykFFXxB4vz6qYGjLVQ
+w2je6rlDAgMBAAECggEAJAh+7bN/9rNzA1aRHOGjZ3U6/5bOi5+9mZoOvB7gdTXG
+3YvYpcj69r+WXgj2JmF91P3gDbTsp5Et22BKWMAf3TzrYI/3//AjJsN5YSQAPD9A
+XK6heGmy7h6M0V1k1YqV695gA9ybG0olaAbZUy+TnfDSl4xXWvf3UQK4p9LaWzot
+QNhLFyHqBgpPFExtnENIp6nHbqENm1R0TFae5nOBBlwxED7H6dYH5q1+9TQLTP1N
++24Y33q0d9Pfe1lm+nGgzMH7zw//nhn27MDPEB8RrokvzoIoDvW4/pgylIMf+1Nm
+nzXEbJ1MfXALHsxGw+EjTY0PRTwr5ww+IUyDUAaI+QKBgQDobeZd6i6Z5SaWb0u8
+16LMnfPgp4ZF64X79LZl87gTbrZDVH9xdbvk+2rxH3GHAfuVWhyYMkrhvF+KOazR
+MM1xM1zdg87aRrQSi8bAi1CQeg33C+kstCohltA1ODVhIJRJ/BytXbBtSnsfbN01
+/OccZUjWAUD1Y4bpO8s69Q0J6QKBgQDkfM85bCvpa8AwUCyYkJCNxSKspLlrOJbO
+Y+fJIm0rhYC/JU7i+M+3PN3AdSD0c5Lv4UL1jBQHxyCGUKSxSe8XHCyUVxwCtk/K
+19xeFS7V9SPTEanO4CibDKiLuNrBBPZJu6zaIS7jjiTMPLoo5oeL6A2JoJd4lw4u
+dS8gwb0CSwKBgA5rkxlMiCugHe7DZO2Ia19KhXDws9HutNdW7WIR5t+9xK0Utvtx
+FIE2YAIpsz9vDg7MEm4W4LJ0n3DR9zjbUEOvrhlILjM4o79q0J/thMgR6n/jS0os
+u1huJOjIXfdysACPFbBj2ahOMKlYdbj9wdDvL7+nQEJ5NEuQHCHCRlbRAoGAHGWK
+l5djCbqTgy2jrT5iSMxUV+KNDM9WpsXx26SEruEDtD3dxQWpQxu0b6Pe+aKXg2qa
+mMvU/XZ5C1hgb4xBw7yDqdf9qjSgTBRx1duKG5tA3Y2Xbheb1FFJbTwHK/AC7/z8
+KYvwOOXEmwF9HXIxLGklrZIg4SLc51c3CToq1GsCgYEAybdFvjIalERguxK1XSTh
+yXNNlqWxN2tqKjFQc2s57TJ3xK0UQqmcDzPtKgG96x058uiEGGwkyz0ByiWnsOYz
+pNKzmpBFLukdnpCrK1Mjd9SjS/7pXNK55KYkaRFd4NKDC7wl3SpFWFmUiDIMo3cm
+5N5/UMjDjVHsbWJ48Bc17k0=
 -----END PRIVATE KEY-----`;
-try{
+
+  try{
     if(!qz.websocket.isActive()){
       qz.security.setCertificatePromise(function(resolve){ resolve(CERT); });
       qz.security.setSignatureAlgorithm('SHA512');
