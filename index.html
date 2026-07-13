@@ -480,6 +480,7 @@
     <div style="display:flex;gap:.5rem;margin-bottom:1rem;">
       <button class="filter-chip active" id="subtab-btn-notas" onclick="switchAdminTab('notas',this)">📋 Notas</button>
       <button class="filter-chip" id="subtab-btn-carta" onclick="switchAdminTab('carta',this)">🍽️ Carta</button>
+      <button class="filter-chip" id="subtab-btn-consumo" onclick="switchAdminTab('consumo',this)">📊 Consumo</button>
     </div>
 
     <!-- Subtab: Notas -->
@@ -529,6 +530,30 @@
         <button class="filter-chip" onclick="openAddProducto()" style="background:var(--dark);color:#FFFFFF;border-color:rgba(74,127,212,.4)">+ Añadir</button>
       </div>
       <div id="carta-admin-list"></div>
+    </div>
+
+    <!-- Subtab: Consumo -->
+    <div id="subtab-consumo" style="display:none">
+      <div class="admin-filters" style="margin-bottom:.75rem;display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;gap:.5rem;">
+          <div class="filter-chip active" id="cons-filter-todos" onclick="setConsumoFilter('todos',this)">Todos</div>
+          <div class="filter-chip" id="cons-filter-efectivo" onclick="setConsumoFilter('efectivo',this)">💵 Efectivo</div>
+          <div class="filter-chip" id="cons-filter-tarjeta" onclick="setConsumoFilter('tarjeta',this)">💳 Tarjeta</div>
+        </div>
+        <button onclick="exportarConsumoExcel()" style="background:#1A3A5C;color:#fff;border:none;border-radius:20px;padding:.38rem .85rem;font-size:.73rem;cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;">⬇️ Excel</button>
+      </div>
+      <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.75rem;">
+        <div style="flex:1;">
+          <label style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.3rem;">Desde</label>
+          <input type="date" id="cons-fecha-desde" style="width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;background:#fff;" onchange="renderConsumo()">
+        </div>
+        <div style="color:var(--text-muted);padding-top:1.4rem;">→</div>
+        <div style="flex:1;">
+          <label style="font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:.3rem;">Hasta</label>
+          <input type="date" id="cons-fecha-hasta" style="width:100%;padding:.65rem .85rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.9rem;outline:none;background:#fff;" onchange="renderConsumo()">
+        </div>
+      </div>
+      <div id="consumo-list"></div>
     </div>
 
     <!-- Modal nuevo producto -->
@@ -988,6 +1013,58 @@ function setAdminFilter(f,el){
   renderAdmin();
 }
 
+function exportarConsumoExcel(){
+  const desde=document.getElementById('cons-fecha-desde')?document.getElementById('cons-fecha-desde').value:'';
+  const hasta=document.getElementById('cons-fecha-hasta')?document.getElementById('cons-fecha-hasta').value:'';
+  const pagoFiltro=document.querySelector('[id^="cons-filter-"].active')?.id.replace('cons-filter-','') || 'todos';
+
+  let base=notas.filter(n=>{
+    if(desde||hasta){
+      if(!n.created_at) return false;
+      const d=n.created_at.slice(0,10);
+      if(desde&&d<desde) return false;
+      if(hasta&&d>hasta) return false;
+    }
+    if(pagoFiltro!=='todos'&&n.forma_pago!==pagoFiltro) return false;
+    return true;
+  });
+
+  const productos={};
+  base.forEach(function(n){
+    const lineas=JSON.parse(n.lineas||'[]');
+    lineas.forEach(function(l){
+      if(!l.nombre||!l.qty) return;
+      if(!productos[l.nombre]) productos[l.nombre]={nombre:l.nombre,cat:l.cat||'Otros',uds:0,importe:0};
+      productos[l.nombre].uds+=l.qty;
+      productos[l.nombre].importe+=l.subtotal||0;
+    });
+  });
+
+  if(!Object.keys(productos).length){showToast('No hay datos para exportar','error');return;}
+
+  const sorted=Object.values(productos).sort((a,b)=>b.importe-a.importe);
+  const totalUds=sorted.reduce((a,p)=>a+p.uds,0);
+  const totalImporte=sorted.reduce((a,p)=>a+p.importe,0);
+
+  const cols=['Categoría','Producto','Unidades','Importe (€)'];
+  const rows=[cols];
+  sorted.forEach(function(p){
+    rows.push([p.cat, p.nombre, p.uds, fmt2(p.importe).replace('.',',')]);
+  });
+  rows.push([]);
+  rows.push(['','TOTAL', totalUds, fmt2(totalImporte).replace('.',',')]);
+
+  const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='consumo-ccirunes-'+(desde||'inicio')+'-'+(hasta||'hoy')+'.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ Excel descargado · '+sorted.length+' productos');
+}
+
 function exportarExcel(){
   // Obtener el mismo filtro que renderAdmin
   const fechaDesde=document.getElementById('admin-fecha-desde')?document.getElementById('admin-fecha-desde').value:'';
@@ -1324,9 +1401,100 @@ async function deleteProducto(id,nombre){
 function switchAdminTab(tab,el){
   document.getElementById('subtab-notas').style.display=tab==='notas'?'block':'none';
   document.getElementById('subtab-carta').style.display=tab==='carta'?'block':'none';
+  document.getElementById('subtab-consumo').style.display=tab==='consumo'?'block':'none';
   document.querySelectorAll('[id^="subtab-btn-"]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   if(tab==='carta') renderCartaAdmin();
+  if(tab==='consumo') renderConsumo();
+}
+
+function setConsumoFilter(f,el){
+  document.querySelectorAll('[id^="cons-filter-"]').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderConsumo();
+}
+
+function renderConsumo(){
+  const desde=document.getElementById('cons-fecha-desde')?document.getElementById('cons-fecha-desde').value:'';
+  const hasta=document.getElementById('cons-fecha-hasta')?document.getElementById('cons-fecha-hasta').value:'';
+  const pagoFiltro=document.querySelector('[id^="cons-filter-"].active')?.id.replace('cons-filter-','') || 'todos';
+
+  // Filtrar notas
+  let base=notas.filter(n=>{
+    if(desde||hasta){
+      if(!n.created_at) return false;
+      const d=n.created_at.slice(0,10);
+      if(desde&&d<desde) return false;
+      if(hasta&&d>hasta) return false;
+    }
+    if(pagoFiltro!=='todos'&&n.forma_pago!==pagoFiltro) return false;
+    return true;
+  });
+
+  // Acumular por producto
+  const productos={};
+  base.forEach(function(n){
+    const lineas=JSON.parse(n.lineas||'[]');
+    lineas.forEach(function(l){
+      if(!l.nombre||!l.qty) return;
+      if(!productos[l.nombre]) productos[l.nombre]={nombre:l.nombre,uds:0,importe:0,cat:l.cat||''};
+      productos[l.nombre].uds+=l.qty;
+      productos[l.nombre].importe+=l.subtotal||0;
+    });
+  });
+
+  const list=document.getElementById('consumo-list');
+  if(!Object.keys(productos).length){
+    list.innerHTML='<div class="empty-state"><div class="empty-icon">📊</div><p>No hay consumiciones en este período.</p></div>';
+    return;
+  }
+
+  // Ordenar por importe desc
+  const sorted=Object.values(productos).sort((a,b)=>b.importe-a.importe);
+  const totalUds=sorted.reduce((a,p)=>a+p.uds,0);
+  const totalImporte=sorted.reduce((a,p)=>a+p.importe,0);
+
+  // Agrupar por categoría
+  const cats={};
+  sorted.forEach(function(p){
+    const cat=p.cat||'Otros';
+    if(!cats[cat]) cats[cat]=[];
+    cats[cat].push(p);
+  });
+
+  let html='<div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;">'
+    +'<div class="stat-card" style="flex:1;min-width:100px;"><div class="stat-num">'+totalUds+'</div><div class="stat-label">Unidades</div></div>'
+    +'<div class="stat-card" style="flex:1;min-width:100px;"><div class="stat-num">'+fmt2(totalImporte)+'€</div><div class="stat-label">Importe</div></div>'
+    +'<div class="stat-card" style="flex:1;min-width:100px;"><div class="stat-num">'+sorted.length+'</div><div class="stat-label">Productos</div></div>'
+    +'</div>';
+
+  Object.entries(cats).forEach(function([cat,prods]){
+    const catUds=prods.reduce((a,p)=>a+p.uds,0);
+    const catImporte=prods.reduce((a,p)=>a+p.importe,0);
+    html+='<div style="margin-bottom:1.25rem;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;padding:.45rem .75rem;background:var(--dark);border-radius:10px;margin-bottom:.4rem;">'
+        +'<span style="color:#fff;font-family:\'Playfair Display\',serif;font-size:.92rem;">'+cat+'</span>'
+        +'<span style="color:var(--gold-light);font-size:.78rem;">'+catUds+' uds · '+fmt2(catImporte)+'€</span>'
+      +'</div>';
+    prods.forEach(function(p){
+      const pct=totalImporte>0?Math.round(p.importe/totalImporte*100):0;
+      html+='<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border-bottom:1px solid var(--border);">'
+        +'<div style="flex:1;min-width:0;">'
+          +'<div style="font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+p.nombre+'</div>'
+          +'<div style="height:4px;background:var(--border);border-radius:2px;margin-top:.3rem;">'
+            +'<div style="height:4px;background:var(--brown);border-radius:2px;width:'+pct+'%"></div>'
+          +'</div>'
+        +'</div>'
+        +'<div style="text-align:right;flex-shrink:0;">'
+          +'<div style="font-size:.85rem;font-weight:600;">'+fmt2(p.importe)+'€</div>'
+          +'<div style="font-size:.72rem;color:var(--text-muted);">'+p.uds+' uds</div>'
+        +'</div>'
+      +'</div>';
+    });
+    html+='</div>';
+  });
+
+  list.innerHTML=html;
 }
 
 function setFechaFilter(f,el){
