@@ -688,7 +688,7 @@ async function loadCarta(){
 let cu=null, cantidades={}, propinaAmt=0, formaPago='efectivo', notas=[], adminFilter='todos', numComensales=0, turnoActual='', mesaActual='', mesasSeleccionadas=[];
 
 function sN(id){const s=SOCIOS[id];return s?s.nombre+' '+s.apellidos:'';}
-function isAdmin(){return SOCIOS[cu]?.admin;}
+function isAdmin(){return !!miAdmin;}
 function fmt2(n){return n.toFixed(2).replace('.',',');}
 
 function calcTotal(){
@@ -700,20 +700,28 @@ function calcTotal(){
 }
 
 // ── SOCIOS DESDE SUPABASE ──────────────────────────────────
+// Solo nombres. Ni DNI, ni teléfonos, ni quién es admin.
 async function loadSocios(){
-  const {data,error}=await sb.from('socios').select('*');
+  const {data,error}=await sb.from('socios_publico').select('*');
   if(error){console.error(error);return;}
   SOCIOS={};
   (data||[]).forEach(function(s){
     SOCIOS[s.socio_num]={
-      dni:s.dni||'',
       nombre:s.nombre||'',
       apellidos:s.apellidos||'',
-      initials:s.initials||'??',
-      tel:s.tel||'',
-      admin:s.admin||false
+      initials:s.initials||'??'
     };
   });
+}
+
+// Datos de la sesión propia. El DNI vive solo en memoria.
+let miDni='', miAdmin=false;
+
+// Comprueba las credenciales EN EL SERVIDOR.
+async function pedirLogin(num,dni){
+  const {data,error}=await sb.rpc('login_socio',{p_num:num,p_dni:dni});
+  if(error){console.error(error);return null;}
+  return (data&&data.length)?data[0]:null;
 }
 
 // ── LOGIN ────────────────────────────────────────────────────
@@ -722,10 +730,17 @@ async function doLogin(){
   const p=document.getElementById('login-pass').value.trim().replace(/[^0-9]/g,'');
   const err=document.getElementById('login-error');
   const btn=document.getElementById('login-btn');
-  const s=SOCIOS[u];
-  if(!s||s.dni.replace(/[^0-9]/g,'')!==p){err.style.display='block';return;}
-  err.style.display='none';
+
   btn.innerHTML='<span class="spinner"></span>Entrando…';btn.disabled=true;
+
+  const s=await pedirLogin(u,p);
+  if(!s){
+    err.style.display='block';
+    btn.innerHTML='Entrar';btn.disabled=false;
+    return;
+  }
+  err.style.display='none';
+  miDni=p; miAdmin=!!s.admin;
   await loadNotas();
   cu=u;
   document.getElementById('user-avatar').textContent=s.initials;
@@ -749,7 +764,7 @@ async function doLogin(){
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 function doLogout(){
-  cu=null;cantidades={};propinaAmt=0;formaPago='efectivo';
+  cu=null;miDni='';miAdmin=false;cantidades={};propinaAmt=0;formaPago='efectivo';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app-screen').style.display='none';
   document.getElementById('login-user').value='';
