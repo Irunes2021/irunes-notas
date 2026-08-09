@@ -611,6 +611,7 @@
         <p>Sociedad Gastronómica</p>
         <p id="ticket-fecha" style="margin-top:.3rem;font-size:.7rem;"></p>
         <p id="ticket-socio" style="font-weight:500;margin-top:.2rem;"></p>
+        <p id="ticket-tel" style="font-size:.72rem;color:var(--text-muted);margin-top:.1rem;"></p>
         <p id="ticket-turno" style="font-size:.75rem;color:var(--text-muted);margin-top:.15rem;"></p>
       </div>
       <div id="ticket-lineas"></div>
@@ -715,7 +716,7 @@ async function loadSocios(){
 }
 
 // Datos de la sesión propia. El DNI vive solo en memoria.
-let miDni='', miAdmin=false;
+let miDni='', miAdmin=false, miTel='';
 
 // Comprueba las credenciales EN EL SERVIDOR.
 async function pedirLogin(num,dni){
@@ -740,7 +741,7 @@ async function doLogin(){
     return;
   }
   err.style.display='none';
-  miDni=p; miAdmin=!!s.admin;
+  miDni=p; miAdmin=!!s.admin; miTel=s.tel||'';
   await loadNotas();
   cu=u;
   document.getElementById('user-avatar').textContent=s.initials;
@@ -764,7 +765,7 @@ async function doLogin(){
 document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 
 function doLogout(){
-  cu=null;miDni='';miAdmin=false;cantidades={};propinaAmt=0;formaPago='efectivo';
+  cu=null;miDni='';miAdmin=false;miTel='';cantidades={};propinaAmt=0;formaPago='efectivo';
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app-screen').style.display='none';
   document.getElementById('login-user').value='';
@@ -916,6 +917,9 @@ function renderTicket(){
   const fechaStr=now.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric',timeZone:'Europe/Madrid'})+' '+now.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
   document.getElementById('ticket-fecha').textContent=fechaStr;
   document.getElementById('ticket-socio').textContent='Socio nº '+parseInt(cu)+' · '+sN(cu);
+  const elTel=document.getElementById('ticket-tel');
+  elTel.textContent = miTel ? '📞 '+miTel : '';
+  elTel.style.display = miTel ? 'block' : 'none';
   document.getElementById('ticket-turno').textContent={comida:'🍽️ Comida',merienda:'☕ Merienda',cena:'🌙 Cena'}[turnoActual]+' · '+numComensales+' comensal'+(numComensales>1?'es':'')+(mesaActual?' · '+mesaActual:'');
   let lineas='';
   let subtotal=0;
