@@ -1680,6 +1680,11 @@ function textToBytes(str){
   return out;
 }
 
+// Teléfono a imprimir. Solo se conoce el del socio con sesión abierta.
+function telDeNota(n){
+  return (n && String(n.socio_num) === String(cu) && miTel) ? miTel : '';
+}
+
 function buildESCPOS(n){
   const d=new Date(n.created_at||Date.now());
   const fecha=d.toLocaleDateString('es-ES',{timeZone:'Europe/Madrid'})+' '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Madrid'});
@@ -1690,6 +1695,7 @@ function buildESCPOS(n){
     tCenter(ascii(CLUB_DIR),W),
     tLine(W),
     'N '+parseInt(n.socio_num)+' '+ascii(sN(n.socio_num)),
+    ...(telDeNota(n)?['Tel: '+ascii(telDeNota(n))]:[]),
     fecha,
     'Turno: '+({comida:'Comida',merienda:'Merienda',cena:'Cena'}[n.turno]||'-'),
     'Pers: '+String(n.comensales||1),
@@ -1837,6 +1843,7 @@ function _fallbackPrint(n){
       '<h3>'+CLUB_HEADER+'</h3>'+
       '<p class="center" style="color:#666;font-size:11px;">'+CLUB_DIR+'</p>'+
       '<p>Socio: Nº '+parseInt(n.socio_num)+' - '+sN(n.socio_num)+'</p>'+
+      (telDeNota(n)?'<p>Tel: '+telDeNota(n)+'</p>':'')+
       '<p>Fecha: '+fecha+'</p>'+
       '<p>Turno: '+turnoLabel+' · '+n.comensales+' pers.'+(n.mesa?' · '+n.mesa:'')+'</p>'+
       '<table>'+lineasHtml+'</table>'+
